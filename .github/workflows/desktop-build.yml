@@ -5,6 +5,11 @@ name: 데스크탑 빌드
 on:
   push:
     branches: [master]
+    # 데스크탑 빌드에 영향을 주는 것만. 서버·소개 사이트·문서만 바뀌면 돌지 않는다.
+    # 태그 푸시에는 경로 필터가 적용되지 않으므로 릴리스는 그대로 돈다.
+    paths:
+      - 'app/**'
+      - '.github/workflows/desktop-build.yml'
     tags: ['v*']
   workflow_dispatch:
 
