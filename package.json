@@ -4,7 +4,8 @@
   "private": true,
   "description": "친구·크루와 하루치 TODO 를 나누는 데스크탑 앱 (Flutter 클라이언트 + Node.js/SQLite 서버)",
   "workspaces": [
-    "server"
+    "server",
+    "web"
   ],
   "scripts": {
     "server": "npm --workspace server run start",
@@ -15,6 +16,9 @@
     "test": "npm run test:server && npm run test:app",
     "app": "cd app && flutter run -d macos",
     "test:golden": "cd app && flutter test --tags golden",
-    "dist:macos": "app/scripts/build_dmg.sh"
+    "dist:macos": "app/scripts/build_dmg.sh",
+    "web": "npm --workspace web run dev",
+    "web:build": "npm --workspace web run build",
+    "web:start": "npm --workspace web run start"
   }
 }

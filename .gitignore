@@ -3,6 +3,11 @@ server/data/
 server/uploads/
 .env
 
+web/.next/
+web/out/
+web/next-env.d.ts
+web/tsconfig.tsbuildinfo
+
 app/build/
 app/.dart_tool/
 app/.flutter-plugins-dependencies
