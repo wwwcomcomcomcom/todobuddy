@@ -25,6 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ko">
       <head>
+        <meta name="google-site-verification" content="ZHI6o2jWAVn4Pg423KnOpqXIfmlFVxv4xxr_QxIPL4Y" />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
