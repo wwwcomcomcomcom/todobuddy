@@ -14,6 +14,7 @@
     "test:app": "cd app && flutter test --exclude-tags golden",
     "test": "npm run test:server && npm run test:app",
     "app": "cd app && flutter run -d macos",
-    "test:golden": "cd app && flutter test --tags golden"
+    "test:golden": "cd app && flutter test --tags golden",
+    "dist:macos": "app/scripts/build_dmg.sh"
   }
 }
