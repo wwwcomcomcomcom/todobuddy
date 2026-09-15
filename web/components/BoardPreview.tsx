@@ -58,19 +58,19 @@ const weekdays = [
 
 const groups = [
   {
-    name: '일하는척 하기 위한 카테고리',
+    name: '회사에서 할 일',
     color: CORAL,
     todos: [
-      { title: '개선판 만들기', done: true },
-      { title: '회의록 정리', done: false },
+      { title: '주간 보고서 쓰기', done: true },
+      { title: '디자인 리뷰 준비', done: false },
     ],
   },
   {
-    name: '개인적으로 할일',
+    name: '혼자 하는 일',
     color: LEMON,
     todos: [
-      { title: '글쓰기', done: true },
-      { title: '입사지원', done: false },
+      { title: '러닝 30분', done: true },
+      { title: '책 20쪽 읽기', done: false },
     ],
   },
 ];
@@ -108,11 +108,11 @@ export function BoardPreview() {
       <div className="flex items-center gap-1.5 border-b border-line px-4 py-3">
         <span className="flex items-center gap-1.5 rounded-full bg-ink py-1 pr-3 pl-1 text-[11.5px] font-semibold text-white">
           <span className="grid h-[19px] w-[19px] place-items-center rounded-full bg-white/20 text-[9.5px]">
-            집
+            하
           </span>
-          집가고싶다
+          하루
         </span>
-        {['더모먼트', '서연'].map((name) => (
+        {['달리기모임', '민서'].map((name) => (
           <span
             key={name}
             className="flex items-center gap-1.5 rounded-full bg-chip py-1 pr-3 pl-1 text-[11.5px] text-subtle"
