@@ -41,14 +41,14 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      # 이 스크립트가 flutter build macos --release 부터 ad-hoc 서명, DMG 생성까지 한다.
-      - name: DMG 빌드
-        run: app/scripts/build_dmg.sh
+      # 이 스크립트가 flutter build macos --release 부터 ad-hoc 서명, ZIP 생성까지 한다.
+      - name: ZIP 빌드
+        run: app/scripts/build_macos.sh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-dmg
-          path: app/build/dist/*.dmg
+          name: macos-zip
+          path: app/build/dist/*-macos.zip
           if-no-files-found: error
 
   windows:
