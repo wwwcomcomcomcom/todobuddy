@@ -25,7 +25,7 @@ void main() {
 
     await tester.tap(find.text('이름만으로 시작하기 (개발용)'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '집가고싶다');
+    await tester.enterText(find.byType(TextField), '하루');
     await tester.tap(find.text('시작'));
     await tester.pumpAndSettle();
   }
@@ -48,8 +48,8 @@ void main() {
     await signIn(tester);
 
     // 상단 스코프 칩: 나 · 크루 · 친구
-    expect(find.text('더모먼트'), findsOneWidget);
-    expect(find.text('서연'), findsOneWidget);
+    expect(find.text('달리기모임'), findsOneWidget);
+    expect(find.text('민서'), findsOneWidget);
 
     // 왼쪽: 프로필과 캘린더
     expect(find.text('프로필에 자기소개를 입력해보세요'), findsOneWidget);
@@ -57,10 +57,10 @@ void main() {
     expect(find.text('월'), findsOneWidget);
 
     // 오른쪽: 카테고리와 TODO
-    expect(find.text('일하는척 하기 위한 카테고리'), findsOneWidget);
-    expect(find.text('개인적으로 할일'), findsOneWidget);
-    expect(find.text('OCR 개선판 만들기'), findsOneWidget);
-    expect(find.text('Velog 글쓰기'), findsOneWidget);
+    expect(find.text('회사에서 할 일'), findsOneWidget);
+    expect(find.text('혼자 하는 일'), findsOneWidget);
+    expect(find.text('주간 보고서 쓰기'), findsOneWidget);
+    expect(find.text('디자인 리뷰 준비'), findsOneWidget);
 
     expect(server.requests, contains('GET /board'));
     expect(server.requests, contains('GET /board/calendar'));
@@ -74,8 +74,8 @@ void main() {
     await signIn(tester);
     server.requests.clear();
 
-    // 'Velog 글쓰기' 행의 체크박스(텍스트 왼쪽의 스퀘어클)를 누른다.
-    final row = find.ancestor(of: find.text('Velog 글쓰기'), matching: find.byType(Row)).first;
+    // '디자인 리뷰 준비' 행의 체크박스(텍스트 왼쪽의 스퀘어클)를 누른다.
+    final row = find.ancestor(of: find.text('디자인 리뷰 준비'), matching: find.byType(Row)).first;
     await tester.tap(find.descendant(of: row, matching: find.byType(GestureDetector)).first);
     await tester.pumpAndSettle();
 
@@ -88,7 +88,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     await signIn(tester);
-    await tester.tap(find.text('더모먼트'));
+    await tester.tap(find.text('달리기모임'));
     await tester.pumpAndSettle();
 
     expect(state.scope, 'crew:1');

@@ -39,7 +39,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('이름만으로 시작하기 (개발용)'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '집가고싶다');
+    await tester.enterText(find.byType(TextField), '하루');
     await tester.tap(find.text('시작'));
     await tester.pumpAndSettle();
 

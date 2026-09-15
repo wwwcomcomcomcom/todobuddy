@@ -11,7 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 /// 구글이 그 주소로 authorization code 를 돌려주면, 코드 자체는 우리 서버가
 /// client_secret 과 함께 토큰으로 교환한다. (앱에는 secret 을 두지 않는다.)
 ///
-/// macOS / Windows / Linux 가 같은 코드를 쓴다. 브라우저에서는 스스로 포트를 열 수 없어
+/// macOS / Windows 가 같은 코드를 쓴다. 브라우저에서는 스스로 포트를 열 수 없어
 /// 이 방식을 그대로 쓸 수 없다 — 웹을 지원하게 되면 리다이렉트 방식이 따로 필요하다.
 class GoogleLoopbackSignIn {
   GoogleLoopbackSignIn({required this.clientId});

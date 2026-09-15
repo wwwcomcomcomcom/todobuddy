@@ -52,7 +52,7 @@ class FakeServer {
                 'id': 11,
                 'categoryId': 2,
                 'date': '2026-09-15',
-                'title': 'Velog 글쓰기',
+                'title': '디자인 리뷰 준비',
                 'done': true,
                 'sortOrder': 0,
               };
@@ -66,28 +66,28 @@ class FakeServer {
   static const _me = {
     'type': 'user',
     'id': 1,
-    'name': '집가고싶다',
+    'name': '하루',
     'bio': '',
-    'handle': 'gohome',
+    'handle': 'haru',
     'avatarUrl': null,
   };
 
   static const _friend = {
     'type': 'user',
     'id': 2,
-    'name': '서연',
+    'name': '민서',
     'bio': '',
-    'handle': 'seoyeon',
+    'handle': 'minseo',
     'avatarUrl': null,
   };
 
   static const _crew = {
     'type': 'crew',
     'id': 1,
-    'name': '더모먼트',
+    'name': '달리기모임',
     'bio': '같이 달리는 사람들',
     'avatarUrl': null,
-    'inviteCode': 'MOMENT01',
+    'inviteCode': 'RUNNING1',
     'ownerId': 1,
     'memberCount': 2,
   };
@@ -99,29 +99,29 @@ class FakeServer {
     'categories': [
       {
         'id': 1,
-        'name': '일하는척 하기 위한 카테고리',
+        'name': '회사에서 할 일',
         'color': '#EE8B8B',
         'visibility': 'private',
         'sortOrder': 0,
-        'owner': {'id': 1, 'name': '집가고싶다', 'avatarUrl': null},
+        'owner': {'id': 1, 'name': '하루', 'avatarUrl': null},
         'editable': true,
         'shares': [],
         'todos': [
-          {'id': 10, 'categoryId': 1, 'date': '2026-09-15', 'title': 'OCR 개선판 만들기', 'done': true, 'sortOrder': 0},
+          {'id': 10, 'categoryId': 1, 'date': '2026-09-15', 'title': '주간 보고서 쓰기', 'done': true, 'sortOrder': 0},
         ],
       },
       {
         'id': 2,
-        'name': '개인적으로 할일',
+        'name': '혼자 하는 일',
         'color': '#F5C543',
         'visibility': 'public',
         'sortOrder': 1,
-        'owner': {'id': 1, 'name': '집가고싶다', 'avatarUrl': null},
+        'owner': {'id': 1, 'name': '하루', 'avatarUrl': null},
         'editable': true,
         'shares': [],
         'todos': [
-          {'id': 11, 'categoryId': 2, 'date': '2026-09-15', 'title': 'Velog 글쓰기', 'done': false, 'sortOrder': 0},
-          {'id': 12, 'categoryId': 2, 'date': '2026-09-15', 'title': '입사지원', 'done': true, 'sortOrder': 1},
+          {'id': 11, 'categoryId': 2, 'date': '2026-09-15', 'title': '디자인 리뷰 준비', 'done': false, 'sortOrder': 0},
+          {'id': 12, 'categoryId': 2, 'date': '2026-09-15', 'title': '러닝 30분', 'done': true, 'sortOrder': 1},
         ],
       },
     ],
