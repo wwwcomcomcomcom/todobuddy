@@ -67,16 +67,26 @@ jobs:
         working-directory: app
         run: flutter pub get
 
-      - name: 릴리스 빌드
-        working-directory: app
-        shell: pwsh
-        run: flutter build windows --release --dart-define="TODOBUDDY_API=$env:TODOBUDDY_API"
-
-      - name: zip 으로 묶기
+      - name: 버전 읽기
+        id: version
         shell: pwsh
         run: |
           $line = Get-Content app/pubspec.yaml | Where-Object { $_ -match '^version:' } | Select-Object -First 1
           $version = ($line -split ':', 2)[1].Trim().Split('+')[0]
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: 릴리스 빌드
+        working-directory: app
+        shell: pwsh
+        run: |
+          flutter build windows --release `
+            --dart-define="TODOBUDDY_API=$env:TODOBUDDY_API" `
+            --dart-define="TODOBUDDY_APP_VERSION=${{ steps.version.outputs.version }}"
+
+      - name: zip 으로 묶기
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
           New-Item -ItemType Directory -Force -Path app/build/dist | Out-Null
           Compress-Archive -Path app/build/windows/x64/runner/Release/* `
             -DestinationPath "app/build/dist/TodoBuddy-$version-windows.zip"
