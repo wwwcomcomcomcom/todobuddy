@@ -20,6 +20,9 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.47.4'
+  # 배포 빌드가 바라볼 서버 주소. 저장소 변수(Settings > Variables)에 넣는다.
+  # 비어 있으면 개발용 기본값으로 빌드되므로 내려받은 사람은 직접 서버를 띄워야 한다.
+  TODOBUDDY_API: ${{ vars.TODOBUDDY_API || 'http://127.0.0.1:4000' }}
 
 jobs:
   macos:
@@ -66,7 +69,8 @@ jobs:
 
       - name: 릴리스 빌드
         working-directory: app
-        run: flutter build windows --release
+        shell: pwsh
+        run: flutter build windows --release --dart-define="TODOBUDDY_API=$env:TODOBUDDY_API"
 
       - name: zip 으로 묶기
         shell: pwsh

@@ -73,6 +73,17 @@ npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
 내려받기 버튼은 GitHub Releases 의 최신 릴리스로 보냅니다.
 `v` 로 시작하는 태그를 올리면 워크플로가 macOS DMG 와 Windows ZIP 을 만들어 릴리스에 붙입니다.
 
+**배포 빌드가 바라볼 서버 주소는 저장소 변수로 정합니다.**
+GitHub 의 `Settings > Secrets and variables > Actions > Variables` 에 `TODOBUDDY_API` 를 넣으면
+워크플로가 `--dart-define` 으로 빌드에 박습니다. 비워 두면 개발용 기본값(`http://127.0.0.1:4000`)으로
+빌드되어, 내려받은 사람이 직접 서버를 띄워야 합니다.
+
+```bash
+gh variable set TODOBUDDY_API --body "https://api.example.com"
+```
+
+macOS 는 App Transport Security 때문에 `https` 가 아니면 요청이 막힙니다. 주소는 https 여야 합니다.
+
 ## Google 로그인 붙이기
 
 Google Cloud Console에서 OAuth 클라이언트 ID를 **데스크톱 앱** 유형으로 만든 뒤:

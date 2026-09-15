@@ -44,6 +44,8 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 상태는 `AppState` (provider) 하나뿐이다. 화면은 여기에만 의존한다.
 - `Visibility` 는 Flutter 위젯 이름과 겹치므로 도메인 enum 은 `CategoryVisibility` 다.
 - 서버 주소는 `--dart-define=TODOBUDDY_API=...` 로 바꾼다. 기본값은 `http://127.0.0.1:4000`.
+  배포 빌드는 저장소 변수 `TODOBUDDY_API` 를 워크플로가 읽어 넣는다. 변수가 비면 기본값으로 빌드되니
+  릴리스 전에 설정돼 있는지 확인할 것. macOS 는 ATS 때문에 https 가 아니면 막힌다.
 - 다이얼로그 안의 `TextEditingController` 는 **다이얼로그 자신의 State 가 소유**해야 한다. 호출부에서 만들어 `showDialog` 뒤에 dispose 하면 닫히는 애니메이션 도중 "used after being disposed" 로 터진다. 한 줄 입력은 `showTextPromptDialog()` 를 쓸 것.
 - `Column` 안에서 `ColoredBox` 로 색 띠를 그릴 때는 `crossAxisAlignment: stretch` 가 필요하다. 없으면 교차축 loose 제약 때문에 너비 0 으로 접혀 아무것도 안 보인다 (캘린더 색칠에서 실제로 났던 버그).
 
