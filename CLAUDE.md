@@ -49,6 +49,16 @@ npm run web:build   # 소개 사이트 정적 빌드
   릴리스 전에 설정돼 있는지 확인할 것. macOS 는 ATS 때문에 https 가 아니면 막힌다.
 - 다이얼로그 안의 `TextEditingController` 는 **다이얼로그 자신의 State 가 소유**해야 한다. 호출부에서 만들어 `showDialog` 뒤에 dispose 하면 닫히는 애니메이션 도중 "used after being disposed" 로 터진다. 한 줄 입력은 `showTextPromptDialog()` 를 쓸 것.
 - `Column` 안에서 `ColoredBox` 로 색 띠를 그릴 때는 `crossAxisAlignment: stretch` 가 필요하다. 없으면 교차축 loose 제약 때문에 너비 0 으로 접혀 아무것도 안 보인다 (캘린더 색칠에서 실제로 났던 버그).
+- 업데이트 확인은 `lib/services/update_checker.dart` (GitHub Releases `releases/latest` 조회) 와
+  `lib/services/update_installer.dart` (다운로드 → 압축 해제 → 헬퍼 스크립트로 자체 교체 →
+  재실행)가 맡는다. `HomeScreen` 이 뜨면 `UpdateGate` 가 한 번 확인하고, 메뉴의 "업데이트 확인"
+  으로도 수동 확인할 수 있다. 지금 실행 중인 버전은 `TODOBUDDY_APP_VERSION` dart-define 으로
+  빌드 시 주입된다 (`build_macos.sh`, `desktop-build.yml` 참고) — `AppState`/`ApiClient` 와는
+  무관한, TodoBuddy 서버를 거치지 않는 별도 통로다.
+- macOS 는 자체 교체(실행 중인 `.app` 번들을 지우고 새로 받은 것으로 바꾸는 것)를 위해
+  App Sandbox 를 껐다(`com.apple.security.app-sandbox` = false, 두 entitlements 파일 모두).
+  Mac App Store 배포가 아니라 GitHub ZIP 배포라 샌드박스가 필수는 아니었고, 샌드박스 상태에서는
+  앱이 자기 번들 경로에 쓸 권한이 없어 자체 업데이트가 불가능했다.
 
 ## 웹 (`web/`)
 
