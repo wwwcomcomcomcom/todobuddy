@@ -1,0 +1,5 @@
+# 골든 테스트는 폰트·플랫폼에 민감해서 기본 실행에서 빼둔다.
+#   flutter test --exclude-tags golden   (npm run test:app 이 쓰는 방식)
+#   flutter test --tags golden           (골든만 검증)
+tags:
+  golden:
