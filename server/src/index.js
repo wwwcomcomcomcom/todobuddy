@@ -48,6 +48,8 @@ app.use((err, _req, res, _next) => {
 });
 
 const PORT = Number(process.env.PORT ?? 4000);
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`TodoBuddy server listening on http://127.0.0.1:${PORT}`);
+// 기본은 로컬만. 리버스 프록시가 다른 네임스페이스(컨테이너 등)에 있으면 HOST=0.0.0.0 으로 연다.
+const HOST = process.env.HOST ?? '127.0.0.1';
+app.listen(PORT, HOST, () => {
+  console.log(`TodoBuddy server listening on http://${HOST}:${PORT}`);
 });
