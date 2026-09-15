@@ -18,10 +18,10 @@ export const site = {
 export const platforms = [
   {
     name: 'macOS',
-    status: '내려받아 바로 실행',
-    detail: 'Apple Silicon · Intel. DMG 를 열어 응용 프로그램으로 옮기면 됩니다.',
+    status: '압축을 풀어 실행',
+    detail: 'Apple Silicon · Intel. 압축을 풀고 앱을 응용 프로그램 폴더로 옮기면 됩니다.',
     href: site.latestReleaseUrl,
-    cta: 'DMG 내려받기',
+    cta: 'ZIP 내려받기',
   },
   {
     name: 'Windows',

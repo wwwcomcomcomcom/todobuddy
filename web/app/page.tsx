@@ -193,11 +193,17 @@ export default function HomePage() {
             <div>
               <h3 className="text-[15px] font-bold">macOS에서 처음 열 때</h3>
               <p className="mt-2.5 max-w-[42ch] text-[14px] leading-[1.8] text-subtle">
-                아직 Apple Developer 인증서로 서명하지 않았습니다. 처음 한 번은 앱을
-                우클릭(Control+클릭)한 뒤 <span className="text-ink">열기</span>를 고르고, 다시 뜨는
-                창에서 <span className="text-ink">열기</span>를 누릅니다. 그 다음부터는 더블클릭으로
-                열립니다.
+                아직 Apple Developer 인증서로 서명하지 않아, 처음 한 번은 macOS 가 실행을 막습니다.
+                경고를 닫고 <span className="text-ink">시스템 설정 → 개인정보 보호 및 보안</span> 으로
+                가면 아래쪽 보안 항목에 <span className="text-ink">그래도 열기</span> 가 생깁니다. 그
+                다음부터는 더블클릭으로 열립니다.
               </p>
+              <p className="mt-3 max-w-[42ch] text-[14px] leading-[1.8] text-subtle">
+                터미널이 편하면 아래 한 줄로도 됩니다. 받은 파일에 붙는 격리 표시를 지웁니다.
+              </p>
+              <code className="mt-2.5 block overflow-x-auto rounded-xl bg-chip px-3.5 py-3 font-mono text-[12.5px] whitespace-pre text-ink">
+                xattr -dr com.apple.quarantine &quot;/Applications/Todo Buddy.app&quot;
+              </code>
             </div>
 
             <div>
