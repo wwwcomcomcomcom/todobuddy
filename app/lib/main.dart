@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
+import 'widgets/update_gate.dart';
 
 void main() {
   runApp(const TodoBuddyApp());
@@ -41,7 +42,7 @@ class _Root extends StatelessWidget {
           body: Center(child: CircularProgressIndicator(color: AppColors.ink)),
         ),
       AuthStatus.signedOut => const LoginScreen(),
-      AuthStatus.signedIn => const HomeScreen(),
+      AuthStatus.signedIn => const UpdateGate(child: HomeScreen()),
     };
   }
 }

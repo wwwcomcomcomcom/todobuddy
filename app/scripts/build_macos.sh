@@ -24,8 +24,10 @@ ZIP_PATH="$DIST_DIR/TodoBuddy-${VERSION}-macos.zip"
 # 앱이 바라볼 서버 주소. 안 넘기면 개발용 기본값 그대로 빌드된다.
 API_URL="${TODOBUDDY_API:-http://127.0.0.1:4000}"
 
-echo "==> flutter build macos --release (API: $API_URL)"
-flutter build macos --release --dart-define="TODOBUDDY_API=$API_URL"
+echo "==> flutter build macos --release (API: $API_URL, VERSION: $VERSION)"
+flutter build macos --release \
+  --dart-define="TODOBUDDY_API=$API_URL" \
+  --dart-define="TODOBUDDY_APP_VERSION=$VERSION"
 
 # 샌드박스 엔타이틀먼트가 서명에 실려야 하므로 ad-hoc 이라도 서명은 한다.
 echo "==> ad-hoc codesign"

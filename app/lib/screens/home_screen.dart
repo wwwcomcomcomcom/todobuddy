@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/update_checker.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/month_calendar.dart';
 import '../widgets/profile_card.dart';
 import '../widgets/scope_bar.dart';
 import '../widgets/todo_column.dart';
+import '../widgets/update_dialog.dart';
 import 'category_form_screen.dart';
 import 'category_manage_screen.dart';
 import 'people_screen.dart';
@@ -138,6 +140,9 @@ class _MainMenuButton extends StatelessWidget {
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const PeopleScreen()));
           case 'today':
             await state.selectDate(DateTime.now());
+          case 'check_update':
+            await _checkForUpdateManually(context);
+            return;
           case 'signout':
             await state.signOut();
             return;
@@ -178,6 +183,14 @@ class _MainMenuButton extends StatelessWidget {
             title: Text('오늘로 이동'),
           ),
         ),
+        PopupMenuItem(
+          value: 'check_update',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.system_update_alt_rounded),
+            title: Text('업데이트 확인'),
+          ),
+        ),
         PopupMenuDivider(),
         PopupMenuItem(
           value: 'signout',
@@ -189,5 +202,15 @@ class _MainMenuButton extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+Future<void> _checkForUpdateManually(BuildContext context) async {
+  final info = await UpdateChecker().checkForUpdate();
+  if (!context.mounted) return;
+  if (info != null) {
+    await showUpdateAvailableDialog(context, info);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('최신 버전이에요.')));
   }
 }
