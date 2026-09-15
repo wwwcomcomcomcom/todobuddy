@@ -71,7 +71,7 @@ npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
 | GitHub 저장소 | `NEXT_PUBLIC_GITHUB_REPO` | `wwwcomcomcomcom/todobuddy` |
 
 내려받기 버튼은 GitHub Releases 의 최신 릴리스로 보냅니다.
-`v` 로 시작하는 태그를 올리면 워크플로가 macOS DMG 와 Windows ZIP 을 만들어 릴리스에 붙입니다.
+`v` 로 시작하는 태그를 올리면 워크플로가 macOS·Windows ZIP 을 만들어 릴리스에 붙입니다.
 
 **배포 빌드가 바라볼 서버 주소는 저장소 변수로 정합니다.**
 GitHub 의 `Settings > Secrets and variables > Actions > Variables` 에 `TODOBUDDY_API` 를 넣으면

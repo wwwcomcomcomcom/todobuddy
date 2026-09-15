@@ -1,7 +1,7 @@
 name: todobuddy_app
 description: "TodoBuddy - 친구·크루와 함께 쓰는 데일리 TODO 데스크탑 앱"
 publish_to: 'none'
-version: 0.1.1
+version: 0.1.2
 
 environment:
   sdk: ^3.13.0
