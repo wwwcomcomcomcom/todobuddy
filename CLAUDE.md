@@ -60,9 +60,10 @@ npm run web:build   # 소개 사이트 정적 빌드
 ## 빌드 대상
 
 - **macOS**: `macos/Runner/*.entitlements` 두 파일 모두에 `network.client`(서버 호출), `network.server`(구글 loopback 수신), `files.user-selected.read-only`(프로필 사진) 가 있어야 한다. `flutter create` 를 다시 돌리면 날아갈 수 있으니 이후 꼭 확인할 것.
-- **Windows**: 코드는 준비돼 있지만 `flutter build windows` 는 Windows 호스트에서만 돈다. macOS 에서 확인 불가.
+- **Windows**: `flutter build windows` 는 Windows 호스트에서만 돈다. macOS 에서는 확인할 수 없으니 GitHub Actions(`windows-latest`)로 검증할 것.
+- **Linux**: 지원 대상이 아니다. `app/linux/` 스캐폴드를 지웠다. 되살릴 일이 생기면 `flutter create --platforms=linux .` 로 재생성한다.
 - **Web**: `web/` 는 있고 빌드도 통과하지만 **지원 대상이 아니다.** 구글 로그인이 쓰는 `dart:io` 의 `HttpServer` 는 웹에서 컴파일만 되는 스텁이라 런타임에 throw 한다. 웹을 붙이려면 `lib/api/google_sign_in.dart` 를 조건부 import 로 갈라 리다이렉트 방식을 따로 구현해야 한다.
-- 데스크탑 세 플랫폼은 같은 코드·같은 로그인 흐름(loopback + PKCE)을 쓴다.
+- 데스크탑 두 플랫폼(macOS·Windows)은 같은 코드·같은 로그인 흐름(loopback + PKCE)을 쓴다.
 
 ## 커밋
 

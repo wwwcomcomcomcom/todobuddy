@@ -2,7 +2,7 @@
 
 친구·크루와 하루치 할 일을 나눠 보는 크로스플랫폼 데스크탑 TODO 앱.
 
-한 저장소 안에 두 모듈이 들어 있습니다.
+한 저장소 안에 세 모듈이 들어 있습니다.
 
 | 모듈 | 내용 |
 | --- | --- |
@@ -15,11 +15,11 @@
 | 대상 | 상태 | 비고 |
 | --- | --- | --- |
 | macOS | 확인됨 | debug·release 빌드 및 실기 실행 확인 |
-| Windows | 코드 준비 완료 | 러너·플러그인 배선 완료. `flutter build windows` 는 **Windows 호스트에서만** 돌아간다 |
-| Linux | 스캐폴드 있음 | 미검증 |
+| Windows | 확인됨 | GitHub Actions 의 `windows-latest` 에서 빌드·배포. macOS 호스트에서는 빌드 불가 |
+| Linux | 지원하지 않음 | 스캐폴드를 제거했습니다. 되살리려면 `flutter create --platforms=linux .` |
 | Web | 빌드만 가능 | 아래 참고 |
 
-세 데스크탑 플랫폼은 **같은 코드**로 돕니다. 로그인 방식(loopback + PKCE)도 동일합니다.
+두 데스크탑 플랫폼은 **같은 코드**로 돕니다. 로그인 방식(loopback + PKCE)도 동일합니다.
 
 **웹은 아직 로그인이 안 됩니다.** `flutter build web` 자체는 통과하고 개발용 로그인도 되지만,
 구글 로그인이 쓰는 `dart:io` 의 `HttpServer` 는 웹에서 런타임에 예외를 던집니다
@@ -36,7 +36,7 @@ cp server/.env.example server/.env # 개발용 로그인을 켜기 위해 필요
 npm run seed                       # 데모 데이터 (집가고싶다 / 서연 / 더모먼트 크루)
 npm run server                     # http://127.0.0.1:4000
 
-cd app && flutter run -d macos     # 또는 -d windows / -d linux
+cd app && flutter run -d macos     # 또는 -d windows
 ```
 
 로그인 화면에서 **이름만으로 시작하기(개발용)** 를 누르고 `집가고싶다` 를 입력하면 시드 계정으로 들어갑니다.
