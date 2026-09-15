@@ -9,6 +9,8 @@ web/next-env.d.ts
 web/tsconfig.tsbuildinfo
 
 app/build/
+# Linux 는 지원 대상이 아니지만 flutter pub get 이 플러그인 등록 스텁을 계속 만든다.
+app/linux/
 app/.dart_tool/
 app/.flutter-plugins-dependencies
 .DS_Store
