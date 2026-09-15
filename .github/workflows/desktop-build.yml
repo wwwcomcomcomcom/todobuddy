@@ -1,0 +1,96 @@
+name: 데스크탑 빌드
+
+# master 에 들어오면 두 플랫폼이 깨지지 않는지 확인하고 아티팩트로 남긴다.
+# 공개 배포는 v 로 시작하는 태그를 올렸을 때만 일어난다.
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.47.4'
+
+jobs:
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: 의존성 설치
+        working-directory: app
+        run: flutter pub get
+
+      # 이 스크립트가 flutter build macos --release 부터 ad-hoc 서명, DMG 생성까지 한다.
+      - name: DMG 빌드
+        run: app/scripts/build_dmg.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: app/build/dist/*.dmg
+          if-no-files-found: error
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: 의존성 설치
+        working-directory: app
+        run: flutter pub get
+
+      - name: 릴리스 빌드
+        working-directory: app
+        run: flutter build windows --release
+
+      - name: zip 으로 묶기
+        shell: pwsh
+        run: |
+          $line = Get-Content app/pubspec.yaml | Where-Object { $_ -match '^version:' } | Select-Object -First 1
+          $version = ($line -split ':', 2)[1].Trim().Split('+')[0]
+          New-Item -ItemType Directory -Force -Path app/build/dist | Out-Null
+          Compress-Archive -Path app/build/windows/x64/runner/Release/* `
+            -DestinationPath "app/build/dist/TodoBuddy-$version-windows.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-zip
+          path: app/build/dist/*.zip
+          if-no-files-found: error
+
+  release:
+    name: 릴리스
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Releases 에 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
