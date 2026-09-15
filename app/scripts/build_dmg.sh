@@ -17,8 +17,11 @@ DIST_DIR="$APP_DIR/build/dist"
 STAGING_DIR="$DIST_DIR/staging"
 DMG_PATH="$DIST_DIR/${VOLUME_NAME}-${VERSION}.dmg"
 
-echo "==> flutter build macos --release"
-flutter build macos --release
+# 앱이 바라볼 서버 주소. 안 넘기면 개발용 기본값 그대로 빌드된다.
+API_URL="${TODOBUDDY_API:-http://127.0.0.1:4000}"
+
+echo "==> flutter build macos --release (API: $API_URL)"
+flutter build macos --release --dart-define="TODOBUDDY_API=$API_URL"
 
 echo "==> ad-hoc codesign"
 codesign --force --deep --sign - \
