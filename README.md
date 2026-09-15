@@ -68,10 +68,10 @@ npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
 | --- | --- | --- |
 | 사이트 주소 | `NEXT_PUBLIC_SITE_URL` | `https://todobuddy.https.gsmsv.site` |
 | 문의 메일 | `NEXT_PUBLIC_CONTACT_EMAIL` | `iieiiergn@gmail.com` |
-| GitHub 저장소 | `NEXT_PUBLIC_GITHUB_REPO` | `wwwcomcomcomcom/todobuddy` — **원격이 없어 추정값. 확인 필요** |
+| GitHub 저장소 | `NEXT_PUBLIC_GITHUB_REPO` | `wwwcomcomcomcom/todobuddy` |
 
 내려받기 버튼은 GitHub Releases 의 최신 릴리스로 보냅니다.
-`npm run dist:macos` 로 만든 DMG 를 릴리스에 올려 두면 그대로 연결됩니다.
+`v` 로 시작하는 태그를 올리면 워크플로가 macOS DMG 와 Windows ZIP 을 만들어 릴리스에 붙입니다.
 
 ## Google 로그인 붙이기
 
