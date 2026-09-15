@@ -8,6 +8,11 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+# 같은 ref 로 런이 두 개 뜨면 릴리스 단계가 서로 부딪힌다. 취소하지 않고 줄을 세운다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   FLUTTER_VERSION: '3.47.4'
 
@@ -89,8 +94,14 @@ jobs:
       - name: Releases 에 올리기
         env:
           GH_TOKEN: ${{ github.token }}
+        # 재실행이나 중복 런에서도 실패하지 않도록, 이미 있으면 자산만 덮어쓴다.
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "$GITHUB_REF_NAME" \
-            --generate-notes
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "릴리스가 이미 있어 자산만 덮어쓴다: $GITHUB_REF_NAME"
+            gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$GITHUB_REF_NAME" \
+              --generate-notes
+          fi
