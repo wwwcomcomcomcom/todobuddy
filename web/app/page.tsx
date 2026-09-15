@@ -64,7 +64,7 @@ export default function HomePage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                macOS용 내려받기
+                내려받기
               </a>
               <a
                 href={site.repoUrl}
@@ -159,7 +159,7 @@ export default function HomePage() {
             내려받기
           </h2>
           <p className="mt-5 max-w-[42ch] text-[14.5px] leading-[1.8] text-subtle">
-            세 플랫폼이 같은 코드로 돕니다. 지금 완성된 배포본이 있는 쪽은 macOS 하나입니다.
+            macOS 와 Windows 가 같은 코드로 돕니다. 두 쪽 모두 배포본이 있습니다.
           </p>
 
           <ul className="mt-10 divide-y divide-line border-y border-line">
@@ -181,11 +181,7 @@ export default function HomePage() {
                   href={platform.href}
                   target="_blank"
                   rel="noreferrer"
-                  className={
-                    platform.tone === 'primary'
-                      ? 'shrink-0 rounded-full bg-ink px-5 py-3 text-center text-[14px] font-semibold text-white transition-opacity hover:opacity-85'
-                      : 'shrink-0 rounded-full px-5 py-3 text-center text-[14px] font-semibold text-ink ring-1 ring-line transition-colors ring-inset hover:bg-chip'
-                  }
+                  className="shrink-0 rounded-full bg-ink px-5 py-3 text-center text-[14px] font-semibold text-white transition-opacity hover:opacity-85"
                 >
                   {platform.cta}
                 </a>
