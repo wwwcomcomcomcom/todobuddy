@@ -8,6 +8,7 @@
 | --- | --- |
 | `app/` | Flutter 클라이언트 |
 | `server/` | Node.js + SQLite API 서버 (의존성: express, cors) |
+| `web/` | 소개 사이트 (Next.js + TypeScript + Tailwind). 랜딩·이용약관·개인정보 처리방침 |
 
 ### 빌드 대상
 
@@ -42,6 +43,35 @@ cd app && flutter run -d macos     # 또는 -d windows / -d linux
 
 개발용 로그인은 이름만으로 계정을 만드는 통로라 **기본은 꺼져 있습니다**.
 `.env` 의 `TODOBUDDY_ALLOW_DEV_LOGIN=true` 일 때만 열리고, 꺼져 있으면 로그인 화면에도 나타나지 않습니다.
+
+## 소개 사이트
+
+`web/` 는 앱을 소개하고 내려받게 하는 정적 사이트입니다.
+구글 OAuth 심사에 필요한 **홈페이지 · 이용약관 · 개인정보 처리방침** 세 페이지가 여기 있습니다.
+
+```bash
+npm run web        # http://localhost:3000
+npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
+```
+
+| 경로 | 내용 |
+| --- | --- |
+| `/` | 랜딩. 앱 소개와 플랫폼별 내려받기 |
+| `/terms` | 이용약관 |
+| `/privacy` | 개인정보 처리방침 |
+
+색과 모양은 `app/lib/theme.dart` 의 팔레트를 그대로 가져와 앱과 같은 인상을 유지합니다.
+
+배포용 상수는 `web/lib/site.ts` 에 모여 있고, 환경변수로 덮어쓸 수 있습니다.
+
+| 값 | 환경변수 | 지금 값 |
+| --- | --- | --- |
+| 사이트 주소 | `NEXT_PUBLIC_SITE_URL` | `https://todobuddy.https.gsmsv.site` |
+| 문의 메일 | `NEXT_PUBLIC_CONTACT_EMAIL` | `iieiiergn@gmail.com` |
+| GitHub 저장소 | `NEXT_PUBLIC_GITHUB_REPO` | `wwwcomcomcomcom/todobuddy` — **원격이 없어 추정값. 확인 필요** |
+
+내려받기 버튼은 GitHub Releases 의 최신 릴리스로 보냅니다.
+`npm run dist:macos` 로 만든 DMG 를 릴리스에 올려 두면 그대로 연결됩니다.
 
 ## Google 로그인 붙이기
 

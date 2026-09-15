@@ -4,8 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 구조
 
-npm 워크스페이스 하나에 두 모듈이 들어 있다. `app/` (Flutter 클라이언트), `server/` (Node.js + SQLite API).
-루트에서 `npm run ...` 로 양쪽을 돌린다. 도메인 설명과 API 표는 @README.md 참고.
+npm 워크스페이스 하나에 세 모듈이 들어 있다. `app/` (Flutter 클라이언트), `server/` (Node.js + SQLite API),
+`web/` (Next.js 소개 사이트). 루트에서 `npm run ...` 로 돌린다. 도메인 설명과 API 표는 @README.md 참고.
 
 ## 명령어
 
@@ -16,6 +16,8 @@ npm run test:app    # flutter test --exclude-tags golden
 npm run test:golden # 골든만. 실패하면 --update-goldens 전에 렌더 결과를 눈으로 확인할 것
 npm run server      # 서버 (기본 127.0.0.1:4000)
 npm run seed        # 데모 데이터 재생성
+npm run web         # 소개 사이트 (기본 localhost:3000)
+npm run web:build   # 소개 사이트 정적 빌드
 ```
 
 - 서버 테스트는 **인자 없는 `node --test`** 여야 한다. `node --test test/` 는 `MODULE_NOT_FOUND` 로 죽는다.
@@ -44,6 +46,16 @@ npm run seed        # 데모 데이터 재생성
 - 서버 주소는 `--dart-define=TODOBUDDY_API=...` 로 바꾼다. 기본값은 `http://127.0.0.1:4000`.
 - 다이얼로그 안의 `TextEditingController` 는 **다이얼로그 자신의 State 가 소유**해야 한다. 호출부에서 만들어 `showDialog` 뒤에 dispose 하면 닫히는 애니메이션 도중 "used after being disposed" 로 터진다. 한 줄 입력은 `showTextPromptDialog()` 를 쓸 것.
 - `Column` 안에서 `ColoredBox` 로 색 띠를 그릴 때는 `crossAxisAlignment: stretch` 가 필요하다. 없으면 교차축 loose 제약 때문에 너비 0 으로 접혀 아무것도 안 보인다 (캘린더 색칠에서 실제로 났던 버그).
+
+## 웹 (`web/`)
+
+- 앱과 서버를 건드리지 않는 **독립된 소개 사이트**다. 서버 API 를 부르지 않고, 모든 페이지가 정적으로 프리렌더된다.
+  여기에 API 를 옮기거나 `server/` 를 이쪽으로 흡수하지 말 것.
+- Next.js App Router + TypeScript + Tailwind v4. Tailwind 설정 파일은 없고 색·폰트 토큰은 `app/globals.css` 의 `@theme` 에 둔다.
+- 색은 `app/lib/theme.dart` 의 팔레트를 그대로 옮겨 적은 것이다. 한쪽을 바꾸면 다른 쪽도 맞춰야 한다.
+- 헤더 로고(`components/CloverMark.tsx`)의 네 하트 색은 실제 앱 아이콘 PNG 에서 뽑았다. 앱 아이콘을 바꾸면 여기도 다시 뽑을 것.
+- 배포용 상수(저장소 슬러그·사이트 주소·문의 메일)는 `lib/site.ts` 한 곳에만 둔다. 지금은 자리표시자라 배포 전에 채워야 한다.
+- 이용약관·개인정보 처리방침의 내용은 실제 동작과 맞아야 한다. 수집 항목·공개 범위·삭제 범위를 바꾸면 `app/privacy/page.tsx` 도 같이 고칠 것.
 
 ## 빌드 대상
 
