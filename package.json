@@ -1,0 +1,19 @@
+{
+  "name": "todobuddy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "친구·크루와 하루치 TODO 를 나누는 데스크탑 앱 (Flutter 클라이언트 + Node.js/SQLite 서버)",
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "server": "npm --workspace server run start",
+    "server:dev": "npm --workspace server run dev",
+    "seed": "npm --workspace server run seed",
+    "test:server": "npm --workspace server run test",
+    "test:app": "cd app && flutter test --exclude-tags golden",
+    "test": "npm run test:server && npm run test:app",
+    "app": "cd app && flutter run -d macos",
+    "test:golden": "cd app && flutter test --tags golden"
+  }
+}

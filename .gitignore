@@ -1,0 +1,10 @@
+node_modules/
+server/data/
+server/uploads/
+.env
+
+app/build/
+app/.dart_tool/
+app/.flutter-plugins-dependencies
+.DS_Store
+app/test/failures/
