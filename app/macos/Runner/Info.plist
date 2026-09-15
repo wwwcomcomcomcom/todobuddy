@@ -29,7 +29,7 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>같은 기기에서 실행 중인 TodoBuddy 서버와 통신하기 위해 필요합니다.</string>
+	<string>같은 기기에서 실행 중인 Todo Buddy 서버와 통신하기 위해 필요합니다.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

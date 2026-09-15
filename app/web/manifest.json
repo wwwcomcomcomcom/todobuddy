@@ -1,6 +1,6 @@
 {
-    "name": "todobuddy_app",
-    "short_name": "todobuddy_app",
+    "name": "Todo Buddy",
+    "short_name": "Todo Buddy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

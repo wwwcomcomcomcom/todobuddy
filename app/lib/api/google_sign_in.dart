@@ -75,7 +75,7 @@ class GoogleLoopbackSignIn {
     request.response
       ..statusCode = 200
       ..headers.contentType = ContentType.html
-      ..write('<!doctype html><meta charset="utf-8"><title>TodoBuddy</title>'
+      ..write('<!doctype html><meta charset="utf-8"><title>Todo Buddy</title>'
           '<body style="font-family:system-ui;display:grid;place-items:center;height:100vh;margin:0">'
           '<p style="font-size:18px">$message</p></body>');
     await request.response.close();

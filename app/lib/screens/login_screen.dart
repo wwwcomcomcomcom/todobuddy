@@ -84,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('TodoBuddy', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
+              const Text('Todo Buddy', style: TextStyle(fontSize: 34, fontWeight: FontWeight.w900)),
               const SizedBox(height: 8),
               const Text('친구·크루와 하루치 할 일을 나눠요',
                   style: TextStyle(color: AppColors.subtle, fontSize: 14)),

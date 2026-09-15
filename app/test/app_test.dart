@@ -34,7 +34,7 @@ void main() {
     await tester.pumpWidget(TodoBuddyApp(state: state));
     await tester.pumpAndSettle();
 
-    expect(find.text('TodoBuddy'), findsOneWidget);
+    expect(find.text('Todo Buddy'), findsOneWidget);
     expect(find.text('이름만으로 시작하기 (개발용)'), findsOneWidget);
     // googleEnabled:false 이므로 구글 버튼은 숨는다.
     expect(find.text('Google 계정으로 로그인'), findsNothing);

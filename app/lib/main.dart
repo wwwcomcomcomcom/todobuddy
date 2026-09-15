@@ -21,7 +21,7 @@ class TodoBuddyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => (state ?? AppState())..restoreSession(),
       child: MaterialApp(
-        title: 'TodoBuddy',
+        title: 'Todo Buddy',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
         home: const _Root(),
