@@ -33,13 +33,13 @@
 ```bash
 npm install                        # server 워크스페이스 의존성
 cp server/.env.example server/.env # 개발용 로그인을 켜기 위해 필요
-npm run seed                       # 데모 데이터 (집가고싶다 / 서연 / 더모먼트 크루)
+npm run seed                       # 데모 데이터 (하루 / 민서 / 달리기모임 크루)
 npm run server                     # http://127.0.0.1:4000
 
 cd app && flutter run -d macos     # 또는 -d windows
 ```
 
-로그인 화면에서 **이름만으로 시작하기(개발용)** 를 누르고 `집가고싶다` 를 입력하면 시드 계정으로 들어갑니다.
+로그인 화면에서 **이름만으로 시작하기(개발용)** 를 누르고 `하루` 를 입력하면 시드 계정으로 들어갑니다.
 
 개발용 로그인은 이름만으로 계정을 만드는 통로라 **기본은 꺼져 있습니다**.
 `.env` 의 `TODOBUDDY_ALLOW_DEV_LOGIN=true` 일 때만 열리고, 꺼져 있으면 로그인 화면에도 나타나지 않습니다.
