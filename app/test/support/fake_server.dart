@@ -7,10 +7,18 @@ import 'package:http/testing.dart';
 /// 실제 서버의 응답 모양을 그대로 흉내 내고, 어떤 요청이 왔는지 기록한다.
 class FakeServer {
   final List<String> requests = [];
+  final List<http.Request> todoWrites = [];
+  final Map<String, dynamic> board = jsonDecode(jsonEncode(_board)) as Map<String, dynamic>;
+  Future<void>? todoWriteDelay;
+  int _nextTodoId = 13;
 
   http.Client get client => MockClient((request) async {
         final path = request.url.path;
         requests.add('${request.method} $path');
+        if ((request.method == 'POST' && path == '/todos') || (request.method == 'PATCH' && path.startsWith('/todos/'))) {
+          todoWrites.add(request);
+          await todoWriteDelay;
+        }
 
         Object? body;
         switch ('${request.method} $path') {
@@ -31,7 +39,20 @@ class FakeServer {
               'outgoing': const [],
             };
           case 'GET /board':
-            body = _board;
+            body = board;
+          case 'POST /todos':
+            final input = jsonDecode(request.body) as Map<String, dynamic>;
+            final category = (board['categories'] as List).firstWhere((c) => c['id'] == input['categoryId']);
+            final todos = category['todos'] as List;
+            body = {
+              'id': _nextTodoId++,
+              'categoryId': input['categoryId'],
+              'date': input['date'],
+              'title': input['title'],
+              'done': false,
+              'sortOrder': todos.length,
+            };
+            todos.add(body);
           case 'GET /board/calendar':
             body = {
               'year': 2026,
@@ -48,14 +69,13 @@ class FakeServer {
             };
           default:
             if (request.method == 'PATCH' && path.startsWith('/todos/')) {
-              body = {
-                'id': 11,
-                'categoryId': 2,
-                'date': '2026-09-15',
-                'title': '디자인 리뷰 준비',
-                'done': true,
-                'sortOrder': 0,
-              };
+              final id = int.parse(path.split('/').last);
+              final todo = (board['categories'] as List)
+                  .expand((c) => c['todos'] as List)
+                  .cast<Map<String, dynamic>>()
+                  .firstWhere((todo) => todo['id'] == id);
+              todo.addAll(jsonDecode(request.body) as Map<String, dynamic>);
+              body = todo;
             } else {
               return http.Response(jsonEncode({'error': 'not_found'}), 404);
             }

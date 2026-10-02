@@ -41,11 +41,16 @@ class _TodoColumnState extends State<TodoColumn> {
             itemBuilder: (context, index) {
               final category = widget.board.categories[index];
               return _CategorySection(
+                key: ValueKey(category.id),
                 category: category,
                 showOwner: showOwner,
                 composing: _composingCategoryId == category.id,
                 onStartCompose: () => setState(() => _composingCategoryId = category.id),
-                onEndCompose: () => setState(() => _composingCategoryId = null),
+                onEndCompose: () {
+                  if (_composingCategoryId == category.id) {
+                    setState(() => _composingCategoryId = null);
+                  }
+                },
               );
             },
           ),
@@ -75,6 +80,7 @@ class _TodoColumnState extends State<TodoColumn> {
 
 class _CategorySection extends StatelessWidget {
   const _CategorySection({
+    super.key,
     required this.category,
     required this.showOwner,
     required this.composing,
@@ -120,9 +126,10 @@ class _CategorySection extends StatelessWidget {
               style: const TextStyle(color: AppColors.subtle, fontSize: 12),
             ),
           ),
-        for (final todo in category.todos) _TodoRow(todo: todo, category: category),
+        for (final todo in category.todos) _TodoRow(key: ValueKey(todo.id), todo: todo, category: category),
         if (composing)
           _TodoComposer(
+            key: ValueKey('compose-${category.id}'),
             color: category.color,
             onSubmit: (title) => state.addTodo(category.id, title),
             onClose: onEndCompose,
@@ -175,7 +182,7 @@ class _CategoryPill extends StatelessWidget {
 }
 
 class _TodoRow extends StatefulWidget {
-  const _TodoRow({required this.todo, required this.category});
+  const _TodoRow({super.key, required this.todo, required this.category});
 
   final Todo todo;
   final Category category;
@@ -217,23 +224,39 @@ class _TodoRowState extends State<_TodoRow> {
             const SizedBox(width: 10),
             Expanded(
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onDoubleTap: editable ? () => setState(() => _editing = true) : null,
-                child: Text(
-                  widget.todo.title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: widget.todo.done ? AppColors.subtle : AppColors.ink,
-                    decoration: widget.todo.done ? TextDecoration.lineThrough : null,
-                    decorationColor: AppColors.subtle,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 22),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      widget.todo.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: widget.todo.done ? AppColors.subtle : AppColors.ink,
+                        decoration: widget.todo.done ? TextDecoration.lineThrough : null,
+                        decorationColor: AppColors.subtle,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-            if (editable && _hovered) ...[
-              _MiniAction(icon: Icons.edit_outlined, tooltip: '이름 바꾸기', onTap: () => setState(() => _editing = true)),
-              _MiniAction(icon: Icons.close_rounded, tooltip: '삭제', onTap: () => state.deleteTodo(widget.todo)),
-            ],
+            if (editable)
+              SizedBox(
+                width: 56,
+                child: _hovered
+                    ? Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _MiniAction(icon: Icons.edit_outlined, tooltip: '이름 바꾸기', onTap: () => setState(() => _editing = true)),
+                          _MiniAction(icon: Icons.close_rounded, tooltip: '삭제', onTap: () => state.deleteTodo(widget.todo)),
+                        ],
+                      )
+                    : null,
+              ),
           ],
         ),
       ),
@@ -286,18 +309,24 @@ class _MiniAction extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => IconButton(
-        icon: Icon(icon, size: 16),
-        tooltip: tooltip,
-        color: AppColors.subtle,
-        visualDensity: VisualDensity.compact,
-        onPressed: onTap,
+  Widget build(BuildContext context) => SizedBox(
+        width: 28,
+        height: 22,
+        child: IconButton(
+          icon: Icon(icon, size: 16),
+          tooltip: tooltip,
+          color: AppColors.subtle,
+          padding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          onPressed: onTap,
+        ),
       );
 }
 
 /// 새 TODO 입력 / 기존 TODO 이름 수정에 함께 쓰는 한 줄 입력기.
 class _TodoComposer extends StatefulWidget {
   const _TodoComposer({
+    super.key,
     required this.color,
     required this.onSubmit,
     required this.onClose,
@@ -316,11 +345,18 @@ class _TodoComposer extends StatefulWidget {
 class _TodoComposerState extends State<_TodoComposer> {
   late final _controller = TextEditingController(text: widget.initialText);
   final _focus = FocusNode();
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focus.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.initialText != null) {
+        _controller.selection = TextSelection(baseOffset: 0, extentOffset: _controller.text.length);
+      }
+      _focus.requestFocus();
+    });
   }
 
   @override
@@ -330,56 +366,93 @@ class _TodoComposerState extends State<_TodoComposer> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit({bool closeAfterSubmit = false}) async {
+    if (_submitting) {
+      if (closeAfterSubmit) widget.onClose();
+      return;
+    }
     final title = _controller.text.trim();
     if (title.isEmpty) {
       widget.onClose();
       return;
     }
-    await widget.onSubmit(title);
-    if (!mounted) return;
-    // 새 항목을 연달아 적을 수 있도록 입력창을 비우고 유지한다. 수정 모드는 바로 닫는다.
-    if (widget.initialText != null) {
-      widget.onClose();
-    } else {
-      _controller.clear();
-      _focus.requestFocus();
+    setState(() => _submitting = true);
+    final onSubmit = widget.onSubmit;
+    // 바깥 클릭은 바로 닫아 클릭한 곳의 동작과 포커스를 유지한다.
+    if (closeAfterSubmit) widget.onClose();
+    try {
+      await onSubmit(title);
+      if (!mounted || closeAfterSubmit) return;
+      // Enter로 새 항목을 연달아 적을 수 있도록 입력창을 비우고 유지한다.
+      if (widget.initialText != null) {
+        widget.onClose();
+      } else {
+        _controller.clear();
+        _focus.requestFocus();
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          ClipPath(
-            clipper: const _SquircleClipper(),
-            child: Container(width: 22, height: 22, color: widget.color.withValues(alpha: 0.25)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focus,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              decoration: const InputDecoration(
-                isDense: true,
-                border: InputBorder.none,
-                hintText: '할 일을 입력하고 Enter',
-                hintStyle: TextStyle(color: AppColors.subtle, fontWeight: FontWeight.w400),
-              ),
-              onSubmitted: (_) => _submit(),
-              onTapOutside: (_) => widget.onClose(),
+    return TextFieldTapRegion(
+      groupId: _focus,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            ClipPath(
+              clipper: const _SquircleClipper(),
+              child: Container(width: 22, height: 22, color: widget.color.withValues(alpha: 0.25)),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded, size: 16),
-            color: AppColors.subtle,
-            visualDensity: VisualDensity.compact,
-            onPressed: widget.onClose,
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  // 여러 줄 제목도 수정 전의 행 높이를 유지한다.
+                  if (widget.initialText != null)
+                    IgnorePointer(
+                      child: Opacity(
+                        opacity: 0,
+                        child: Text(
+                          widget.initialText!,
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                  TextField(
+                    groupId: _focus,
+                    controller: _controller,
+                    focusNode: _focus,
+                    readOnly: _submitting,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, height: 20 / 14),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      constraints: BoxConstraints(minHeight: 22),
+                      border: InputBorder.none,
+                      hintText: '할 일을 입력하고 Enter',
+                      hintStyle: TextStyle(color: AppColors.subtle, fontWeight: FontWeight.w400),
+                    ),
+                    onSubmitted: (_) => _submit(),
+                    onEditingComplete: () {},
+                    onTapOutside: (_) => _submit(closeAfterSubmit: true),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 56,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _MiniAction(icon: Icons.close_rounded, tooltip: '작성 취소', onTap: widget.onClose),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

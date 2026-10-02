@@ -30,7 +30,7 @@ void main() {
         .load();
   });
 
-  testWidgets('메인 화면 골든', (tester) async {
+  Future<void> openHome(WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({});
     final server = FakeServer();
     final state = AppState(api: ApiClient(baseUrl: 'http://test.local', client: server.client))
@@ -48,7 +48,24 @@ void main() {
     await tester.enterText(find.byType(TextField), '하루');
     await tester.tap(find.text('시작'));
     await tester.pumpAndSettle();
+  }
 
+  testWidgets('메인 화면 골든', (tester) async {
+    await openHome(tester);
     await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/home.png'));
+  });
+
+  testWidgets('더블 클릭으로 포커스와 전체 선택이 열린 수정창 골든', (tester) async {
+    await openHome(tester);
+    final title = find.text('디자인 리뷰 준비');
+    await tester.tap(title);
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(title);
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(field.controller!.selection, const TextSelection(baseOffset: 0, extentOffset: 9));
+    await expectLater(find.byType(MaterialApp), matchesGoldenFile('goldens/todo_editing.png'));
   });
 }
