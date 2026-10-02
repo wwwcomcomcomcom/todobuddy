@@ -103,7 +103,7 @@ class _CategorySection extends StatelessWidget {
       children: [
         Row(
           children: [
-            Flexible(child: _CategoryPill(category: category, onAdd: category.editable ? onStartCompose : null)),
+            Flexible(child: CategoryPill(category: category, onAdd: category.editable ? onStartCompose : null)),
             if (showOwner) ...[
               const SizedBox(width: 10),
               Avatar(
@@ -139,8 +139,9 @@ class _CategorySection extends StatelessWidget {
   }
 }
 
-class _CategoryPill extends StatelessWidget {
-  const _CategoryPill({required this.category, this.onAdd});
+/// 카테고리 이름·색·공개설정 아이콘을 보여주는 칩. 미리보기 화면에서도 재사용한다.
+class CategoryPill extends StatelessWidget {
+  const CategoryPill({super.key, required this.category, this.onAdd});
 
   final Category category;
   final VoidCallback? onAdd;
@@ -216,7 +217,7 @@ class _TodoRowState extends State<_TodoRow> {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            _Checkbox(
+            TodoCheckbox(
               color: widget.category.color,
               checked: widget.todo.done,
               onTap: editable ? () => state.toggleTodo(widget.todo) : null,
@@ -264,8 +265,9 @@ class _TodoRowState extends State<_TodoRow> {
   }
 }
 
-class _Checkbox extends StatelessWidget {
-  const _Checkbox({required this.color, required this.checked, this.onTap});
+/// 체크 상태를 보여주는 스퀘어클 체크박스. 미리보기 화면에서도 재사용한다.
+class TodoCheckbox extends StatelessWidget {
+  const TodoCheckbox({super.key, required this.color, required this.checked, this.onTap});
 
   final Color color;
   final bool checked;

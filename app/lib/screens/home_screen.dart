@@ -12,6 +12,7 @@ import '../widgets/update_dialog.dart';
 import 'category_form_screen.dart';
 import 'category_manage_screen.dart';
 import 'people_screen.dart';
+import 'todomate_import_screen.dart';
 
 /// 메인 화면: 왼쪽에 프로필·캘린더, 오른쪽에 TODO 리스트.
 class HomeScreen extends StatelessWidget {
@@ -145,6 +146,8 @@ class _MainMenuButton extends StatelessWidget {
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const PeopleScreen()));
           case 'today':
             await state.selectDate(DateTime.now());
+          case 'import_todomate':
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const TodoMateImportScreen()));
           case 'check_update':
             await _checkForUpdateManually(context);
             return;
@@ -186,6 +189,15 @@ class _MainMenuButton extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             leading: Icon(Icons.today_rounded),
             title: Text('오늘로 이동'),
+          ),
+        ),
+        PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'import_todomate',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.move_down_rounded),
+            title: Text('투두메이트에서 가져오기'),
           ),
         ),
         PopupMenuItem(
