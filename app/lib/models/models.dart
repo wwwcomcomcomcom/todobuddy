@@ -119,6 +119,7 @@ class Todo {
     required this.date,
     required this.title,
     required this.done,
+    this.routineId,
   });
 
   final int id;
@@ -126,6 +127,7 @@ class Todo {
   final String date;
   final String title;
   final bool done;
+  final int? routineId;
 
   factory Todo.fromJson(Map<String, dynamic> j) => Todo(
         id: j['id'] as int,
@@ -133,6 +135,7 @@ class Todo {
         date: j['date'] as String,
         title: j['title'] as String,
         done: j['done'] as bool,
+        routineId: j['routineId'] as int?,
       );
 
   Todo copyWith({String? title, bool? done}) => Todo(
@@ -141,6 +144,7 @@ class Todo {
         date: date,
         title: title ?? this.title,
         done: done ?? this.done,
+        routineId: routineId,
       );
 }
 

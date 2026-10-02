@@ -109,6 +109,10 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
   - `public` 모든 친구와 내가 속한 크루에 자동 노출
 - **TODO** — `(카테고리, 날짜)` 에 귀속된다. 날짜가 바뀌면 그 날의 목록은 비어 있고,
   캘린더로 지난 날짜·앞으로 올 날짜를 오가며 읽고 쓸 수 있다.
+- **반복 일정** — 우상단 메뉴에서 추가·관리한다. 일·주·월 간격, 복수 날짜·요일,
+  매월 몇째/마지막 요일과 말일을 설정할 수 있다.
+  한국 시간 기준으로 시작일·종료일을 지정하거나 종료일 없이 반복한다.
+  삭제 시 과거 완료·미완료 기록 보존과 오늘 일정 삭제 여부를 각각 선택한다.
 - **캘린더 색칠** — 날짜 칸은 그 날 TODO 가 있는 카테고리 색으로 칠해진다.
   여러 카테고리면 색이 가로 띠로 쌓이고, 전부 완료면 체크, 아니면 남은 개수를 보여준다.
 - **크루** — 한 명이 만들고 초대 코드로 참여한다. 각자가 그 크루에 공유하기로 한 카테고리만 모인다.
@@ -135,6 +139,11 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 | POST | `/categories/reorder` | `{ids: []}` 드래그 정렬 |
 | POST | `/todos` | `{categoryId, date, title}` |
 | PATCH DELETE | `/todos/:id` | 완료 토글·이름 수정·삭제 |
+| GET POST | `/routines` | 내 반복 일정 목록·등록 |
+| POST | `/routines/preview` | 반복 설정으로 오늘 이후 예정 날짜 5개 계산 |
+| PATCH | `/routines/:id` | 전체 설정 및 `versionId`로 오늘 이후 규칙 수정 |
+| GET | `/routines/:id/deletion-preview` | 오늘 기준일 및 과거 완료/미완료·오늘 기록 수 |
+| DELETE | `/routines/:id` | `{asOfDate, keepPastDone, keepPastUndone, removeToday}`로 반복 중단·기록 정리 |
 | GET POST | `/crews` | 내 크루 목록·생성 |
 | POST | `/crews/join` | `{inviteCode}` |
 | GET PATCH | `/crews/:id` | 크루 상세(멤버 포함)·수정 |
@@ -164,6 +173,9 @@ cd app && flutter test --tags golden --update-goldens    # 갱신
 
 SQLite 파일은 `server/data/todobuddy.db`, 업로드한 프로필 사진은 `server/uploads/` 에 쌓입니다.
 둘 다 `.gitignore` 에 들어 있고, 지우고 `npm run seed` 를 다시 돌리면 초기 상태로 돌아갑니다.
+
+반복 일정 사용 시 서버와 앱을 함께 업데이트하세요.
+기존 데이터는 유지되며, DB는 서버 시작 시 자동으로 갱신됩니다.
 
 ## 알아 둘 것
 

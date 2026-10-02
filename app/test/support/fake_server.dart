@@ -10,11 +10,14 @@ class FakeServer {
   final List<http.Request> todoWrites = [];
   final Map<String, dynamic> board = jsonDecode(jsonEncode(_board)) as Map<String, dynamic>;
   Future<void>? todoWriteDelay;
+  Future<http.Response?> Function(http.Request)? interceptor;
   int _nextTodoId = 13;
 
   http.Client get client => MockClient((request) async {
         final path = request.url.path;
         requests.add('${request.method} $path');
+        final intercepted = await interceptor?.call(request);
+        if (intercepted != null) return intercepted;
         if ((request.method == 'POST' && path == '/todos') || (request.method == 'PATCH' && path.startsWith('/todos/'))) {
           todoWrites.add(request);
           await todoWriteDelay;

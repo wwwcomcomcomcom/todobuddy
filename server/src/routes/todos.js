@@ -14,6 +14,7 @@ const serialize = (t) => ({
   title: t.title,
   done: Boolean(t.done),
   sortOrder: t.sort_order,
+  routineId: t.routine_id,
 });
 
 /** 쓰기는 항상 본인 카테고리에만 허용된다. 친구·크루 화면은 읽기 전용. */
@@ -51,9 +52,12 @@ router.patch('/:id', (req, res) => {
   const row = myTodo(req, res);
   if (!row) return;
   const { title, done } = req.body ?? {};
-  run('UPDATE todos SET title = COALESCE(?, title), done = COALESCE(?, done) WHERE id = ?',
+  if (title != null && !String(title).trim()) return res.status(400).json({ error: 'title required' });
+  run(`UPDATE todos SET title = COALESCE(?, title), done = COALESCE(?, done),
+    routine_override = CASE WHEN routine_id IS NOT NULL AND ? = 1 THEN 1 ELSE routine_override END WHERE id = ?`,
     title == null ? null : String(title).trim(),
     done == null ? null : (done ? 1 : 0),
+    Number(title != null),
     row.id);
   res.json(serialize(get('SELECT * FROM todos WHERE id = ?', row.id)));
 });
@@ -61,7 +65,10 @@ router.patch('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   const row = myTodo(req, res);
   if (!row) return;
-  run('DELETE FROM todos WHERE id = ?', row.id);
+  tx(() => {
+    if (row.routine_id != null) run('INSERT OR IGNORE INTO routine_exceptions (routine_id, date) VALUES (?, ?)', row.routine_id, row.date);
+    run('DELETE FROM todos WHERE id = ?', row.id);
+  });
   res.status(204).end();
 });
 

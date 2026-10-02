@@ -184,7 +184,7 @@ class AppState extends ChangeNotifier {
   Future<void> toggleTodo(Todo todo) async {
     _replaceTodoLocally(todo.copyWith(done: !todo.done));
     notifyListeners();
-    await _guard(() => api.updateTodo(todo.id, done: !todo.done), silentRefresh: true);
+    await _guard(() => api.updateTodo(todo.id, done: !todo.done));
   }
 
   Future<void> renameTodo(Todo todo, String title) async {
@@ -277,14 +277,14 @@ class AppState extends ChangeNotifier {
   }
 
   /// 쓰기 요청을 보내고 보드를 다시 읽는다. 실패하면 메시지를 남긴다.
-  Future<void> _guard(Future<void> Function() action, {bool silentRefresh = false}) async {
+  Future<void> _guard(Future<void> Function() action) async {
     try {
       await action();
       errorMessage = null;
     } on ApiException catch (e) {
       _fail(e);
     }
-    if (!silentRefresh) await refreshBoard();
+    await refreshBoard();
   }
 
   void _fail(ApiException e) {
