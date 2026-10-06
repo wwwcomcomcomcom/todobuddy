@@ -33,6 +33,21 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 개발용 로그인(`POST /auth/dev`)은 기본 비활성이다. `TODOBUDDY_ALLOW_DEV_LOGIN=true` 일 때만 열린다. 서버 테스트는 spawn 할 때 이 값을 켜서 띄운다.
 - 개발용 로그인 계정의 이메일은 `auth.js` 의 `devEmail()` 로 만든다. 시드와 라우트가 같은 함수를 써야 시드 계정으로 로그인된다.
 
+## 서버 배포
+
+- `v` 태그를 올리면 `.github/workflows/server-deploy.yml` 이 GitHub 호스팅 러너에서 서버 테스트를 돌린 뒤,
+  운영 서버의 self-hosted 러너(라벨 `todobuddy-prod`, 계정 `github-runner`)가 배포한다. 앱 릴리스와 같은 태그라 둘이 같이 나간다.
+  서버만 다시 배포할 때는 Actions 탭에서 태그를 골라 수동 실행한다.
+- **공개 저장소라 `todobuddy-prod` 러너를 쓰는 워크플로에 `pull_request` 트리거를 붙이지 말 것.** 포크 PR 코드가 운영 서버에서 돈다.
+  저장소 설정도 외부 기여자 워크플로는 매번 승인받도록(`all_external_contributors`) 해 두었다.
+- 러너 계정이 할 수 있는 건 `/usr/local/bin/todobuddy-deploy <태그>` 를 `ubuntu` 로 실행하는 것뿐이다.
+  원본은 `server/deploy/todobuddy-deploy.sh` 지만 운영 서버의 사본은 root 소유라 **저장소에서 고쳐도 자동 반영되지 않는다.** 고쳤으면 직접 다시 깔 것.
+  systemd 유닛(`server/deploy/todobuddy-server.service`)도 마찬가지다.
+- 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → `systemctl restart todobuddy-server` → `/health` 확인 순이고,
+  헬스체크가 실패하면 이전 커밋으로 되돌린다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
+- 운영 서버의 Node 는 nvm 경로(`~/.nvm/versions/node/v24.21.0`)를 직접 가리킨다. Node 를 올리면 유닛과 배포 스크립트의 경로를 같이 바꿀 것.
+- 웹(`web/`, 3000 포트)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다.
+
 ## 도메인 불변식
 
 - TODO 는 `(카테고리, 날짜)` 에 귀속된다. 날짜는 항상 `YYYY-MM-DD` 문자열이다.
