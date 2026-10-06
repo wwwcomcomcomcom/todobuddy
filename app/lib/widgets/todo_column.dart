@@ -223,6 +223,11 @@ class _TodoRowState extends State<_TodoRow> {
               onTap: editable ? () => state.toggleTodo(widget.todo) : null,
             ),
             const SizedBox(width: 10),
+            if (widget.todo.routineId != null) ...[
+              const Tooltip(message: '반복 일정 · 수정과 삭제는 이 날짜에만 적용돼요',
+                child: Icon(Icons.repeat_rounded, size: 14, color: AppColors.subtle)),
+              const SizedBox(width: 6),
+            ],
             Expanded(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -253,7 +258,7 @@ class _TodoRowState extends State<_TodoRow> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _MiniAction(icon: Icons.edit_outlined, tooltip: '이름 바꾸기', onTap: () => setState(() => _editing = true)),
-                          _MiniAction(icon: Icons.close_rounded, tooltip: '삭제', onTap: () => state.deleteTodo(widget.todo)),
+                          _MiniAction(icon: Icons.close_rounded, tooltip: widget.todo.routineId == null ? '삭제' : '이 날짜만 삭제', onTap: () => state.deleteTodo(widget.todo)),
                         ],
                       )
                     : null,

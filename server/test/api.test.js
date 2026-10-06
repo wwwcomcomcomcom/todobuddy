@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { shiftDate, todayInZone } from '../src/recurrence.js';
 
 const workDir = mkdtempSync(join(tmpdir(), 'todobuddy-test-'));
 const PORT = 4111;
@@ -214,5 +215,138 @@ describe('TODO 와 캘린더', () => {
       body: { categoryId: category.id, date: '2026-09-15', title: '침입' },
     });
     assert.equal(res.status, 403);
+  });
+});
+
+const routineToday = () => todayInZone('Asia/Seoul');
+let routineAccount = 0;
+async function routineFixture(overrides = {}) {
+  const me = await login(`루틴테스트${++routineAccount}`);
+  const category = (await api('/categories', { token: me.token, method: 'POST', body: { name: '루틴', visibility: 'public' } })).body;
+  const body = { categoryId: category.id, title: '매일 읽기', startDate: shiftDate(routineToday(), -4), endDate: null, timeZone: 'Asia/Seoul', rule: { frequency: 'daily', interval: 1 }, ...overrides };
+  const created = await api('/routines', { token: me.token, method: 'POST', body });
+  assert.equal(created.status, 201);
+  return { me, category, routine: created.body };
+}
+async function routineTodos(token, date, scope = 'me') {
+  const result = await api(`/board?scope=${scope}&date=${date}`, { token });
+  assert.equal(result.status, 200);
+  return result.body.categories.flatMap((c) => c.todos);
+}
+
+describe('반복 일정', () => {
+  it('동시 조회에도 중복 없이 생성되고 완료와 캘린더 집계가 일치한다', async () => {
+    const { me, category, routine } = await routineFixture();
+    const today = routineToday();
+    const boards = await Promise.all(Array.from({ length: 5 }, () => routineTodos(me.token, today)));
+    for (const todos of boards) {
+      assert.equal(todos.length, 1);
+      assert.equal(todos[0].id, boards[0][0].id);
+      assert.equal(todos[0].routineId, routine.id);
+    }
+    await api(`/todos/${boards[0][0].id}`, { token: me.token, method: 'PATCH', body: { done: true } });
+    const [year, month] = today.split('-');
+    const calendar = (await api(`/board/calendar?year=${year}&month=${month}`, { token: me.token })).body;
+    assert.deepEqual(calendar.days.find((d) => d.date === today).segments, [{ categoryId: category.id, color: '#111111', total: 1, done: 1 }]);
+    assert.equal((await routineTodos(me.token, shiftDate(today, 1)))[0].done, false);
+    assert.equal((await routineTodos(me.token, '2099-12-31')).length, 1);
+  });
+
+  it('한 날짜 삭제는 재조회·달력 조회·루틴 수정 후에도 다시 생기지 않는다', async () => {
+    const { me, routine } = await routineFixture();
+    const today = routineToday();
+    const todo = (await routineTodos(me.token, today))[0];
+    assert.equal((await api(`/todos/${todo.id}`, { token: me.token, method: 'DELETE' })).status, 204);
+    assert.deepEqual(await routineTodos(me.token, today), []);
+    assert.equal((await api(`/routines/${routine.id}`, { token: me.token, method: 'PATCH', body: { ...routine, title: '새 이름' } })).status, 200);
+    const [year, month] = today.split('-');
+    await api(`/board/calendar?year=${year}&month=${month}`, { token: me.token });
+    assert.deepEqual(await routineTodos(me.token, today), []);
+    assert.equal((await routineTodos(me.token, shiftDate(today, 1)))[0].title, '새 이름');
+  });
+
+  for (const keepPastDone of [true, false]) for (const keepPastUndone of [true, false]) for (const removeToday of [true, false]) {
+    it(`삭제: 완료 유지=${keepPastDone}, 미완료 유지=${keepPastUndone}, 오늘 삭제=${removeToday}`, async () => {
+      const { me, routine } = await routineFixture();
+      const today = routineToday();
+      const completedDate = shiftDate(today, -4), cachedDate = shiftDate(today, -3), unseenDate = shiftDate(today, -2);
+      const done = (await routineTodos(me.token, completedDate))[0];
+      await api(`/todos/${done.id}`, { token: me.token, method: 'PATCH', body: { done: true } });
+      await routineTodos(me.token, cachedDate);
+      await routineTodos(me.token, shiftDate(today, 5));
+      const preview = (await api(`/routines/${routine.id}/deletion-preview`, { token: me.token })).body;
+      assert.deepEqual(preview, { today, timeZone: 'Asia/Seoul', pastDone: 1, pastUndone: 3, todayCount: 1, futureCount: 1 });
+      const deleted = await api(`/routines/${routine.id}`, { token: me.token, method: 'DELETE', body: { keepPastDone, keepPastUndone, removeToday, asOfDate: preview.today } });
+      assert.equal(deleted.status, 204);
+      assert.equal((await routineTodos(me.token, completedDate)).length, Number(keepPastDone));
+      for (const date of [cachedDate, unseenDate, shiftDate(today, -1)]) {
+        assert.equal((await routineTodos(me.token, date)).length, Number(keepPastUndone));
+      }
+      assert.equal((await routineTodos(me.token, today)).length, Number(!removeToday));
+      for (const date of [shiftDate(today, 1), shiftDate(today, 5), '2099-12-31']) assert.deepEqual(await routineTodos(me.token, date), []);
+      assert.deepEqual((await api('/routines', { token: me.token })).body, []);
+      // Retained rows stay editable even after the routine leaves management.
+      if (keepPastDone) assert.equal((await api(`/todos/${done.id}`, { token: me.token, method: 'PATCH', body: { done: false } })).status, 200);
+    });
+  }
+
+  it('수정은 과거의 미조회 기록, 완료 및 개별 수정 기록을 보존한다', async () => {
+    const { me, routine } = await routineFixture();
+    const today = routineToday();
+    const done = (await routineTodos(me.token, today))[0];
+    const edited = (await routineTodos(me.token, shiftDate(today, 1)))[0];
+    await api(`/todos/${done.id}`, { token: me.token, method: 'PATCH', body: { done: true } });
+    await api(`/todos/${edited.id}`, { token: me.token, method: 'PATCH', body: { title: '이날만 다른 이름' } });
+    await routineTodos(me.token, shiftDate(today, 2));
+    const updated = await api(`/routines/${routine.id}`, { token: me.token, method: 'PATCH', body: { ...routine, title: '새 루틴 이름', startDate: today } });
+    assert.equal(updated.status, 200);
+    assert.equal((await routineTodos(me.token, shiftDate(today, -2)))[0].title, '매일 읽기');
+    assert.equal((await routineTodos(me.token, today))[0].done, true);
+    assert.equal((await routineTodos(me.token, shiftDate(today, 1)))[0].title, '이날만 다른 이름');
+    assert.equal((await routineTodos(me.token, shiftDate(today, 2)))[0].title, '새 루틴 이름');
+    assert.equal((await api(`/routines/${routine.id}`, { token: me.token, method: 'PATCH', body: routine })).status, 409);
+    const again = await api(`/routines/${routine.id}`, { token: me.token, method: 'PATCH', body: { ...updated.body, title: '다시 수정' } });
+    assert.equal(again.status, 200);
+    assert.equal((await routineTodos(me.token, shiftDate(today, -1)))[0].title, '매일 읽기');
+    assert.equal((await routineTodos(me.token, shiftDate(today, 2)))[0].title, '다시 수정');
+  });
+
+  it('시작일과 종료일을 포함하고 범위 밖에는 생성하지 않는다', async () => {
+    const today = routineToday();
+    const { me } = await routineFixture({ startDate: today, endDate: shiftDate(today, 1) });
+    assert.deepEqual(await routineTodos(me.token, shiftDate(today, -1)), []);
+    assert.equal((await routineTodos(me.token, today)).length, 1);
+    assert.equal((await routineTodos(me.token, shiftDate(today, 1))).length, 1);
+    assert.deepEqual(await routineTodos(me.token, shiftDate(today, 2)), []);
+  });
+
+  it('공유 친구가 먼저 읽어도 생성되며 친구는 루틴을 수정하거나 삭제할 수 없다', async () => {
+    const { me, category, routine } = await routineFixture();
+    const friend = await login('루틴공유친구');
+    await api('/friends/request', { token: me.token, method: 'POST', body: { userId: friend.user.id } });
+    const book = (await api('/friends', { token: friend.token })).body;
+    await api(`/friends/${book.incoming[0].friendshipId}/accept`, { token: friend.token, method: 'POST' });
+    const todos = await routineTodos(friend.token, routineToday(), `user:${me.user.id}`);
+    assert.equal(todos[0].routineId, routine.id);
+    for (const method of ['PATCH', 'DELETE']) assert.equal((await api(`/routines/${routine.id}`, { token: friend.token, method, body: routine })).status, 404);
+    assert.equal((await api(`/routines/${routine.id}/deletion-preview`, { token: friend.token })).status, 404);
+    assert.equal((await api('/routines', { token: friend.token, method: 'POST', body: routine })).status, 403);
+    assert.equal((await api(`/todos/${todos[0].id}`, { token: friend.token, method: 'DELETE' })).status, 404);
+    await api(`/categories/${category.id}`, { token: me.token, method: 'DELETE' });
+    assert.deepEqual((await api('/routines', { token: me.token })).body, []);
+  });
+
+  it('미리보기는 저장 없이 계산하며 잘못된 규칙과 삭제 기준일을 거부한다', async () => {
+    const { me, routine } = await routineFixture();
+    const preview = await api('/routines/preview', { token: me.token, method: 'POST', body: routine });
+    assert.equal(preview.body.dates.length, 5);
+    assert.equal(preview.body.dates[0], routineToday());
+    const invalid = await api('/routines', { token: me.token, method: 'POST', body: { ...routine, rule: { frequency: 'weekly', interval: 1, weekdays: [] } } });
+    assert.equal(invalid.status, 400);
+    assert.equal((await api('/routines', { token: me.token })).body.length, 1);
+    const options = { keepPastDone: true, keepPastUndone: true, removeToday: false, asOfDate: shiftDate(routineToday(), -1) };
+    assert.equal((await api(`/routines/${routine.id}`, { token: me.token, method: 'DELETE', body: options })).status, 409);
+    assert.equal((await api(`/routines/${routine.id}`, { token: me.token, method: 'DELETE', body: {} })).status, 400);
+    assert.equal((await api('/routines')).status, 401);
   });
 });

@@ -3,6 +3,8 @@ import { requireAuth } from '../auth.js';
 import { all } from '../db.js';
 import { resolveScope } from '../visibility.js';
 import { serializeCategory } from './categories.js';
+import { ensureOccurrences } from '../routines.js';
+import { validDate } from '../recurrence.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -17,6 +19,7 @@ const serializeTodo = (t) => ({
   title: t.title,
   done: Boolean(t.done),
   sortOrder: t.sort_order,
+  routineId: t.routine_id,
 });
 
 /** 메인 화면 한 번에 그리기: 프로필 + 보이는 카테고리 + 그 날짜의 TODO. */
@@ -24,6 +27,9 @@ router.get('/', (req, res) => {
   const date = DATE_RE.test(req.query.date ?? '') ? req.query.date : today();
   const scope = resolveScope(req.user, req.query.scope ?? 'me');
   if (!scope) return res.status(403).json({ error: 'forbidden' });
+
+  if (!validDate(date)) return res.status(400).json({ error: 'invalid_date' });
+  ensureOccurrences(scope.categories.map((c) => c.id), date, date);
 
   const categories = scope.categories.map((row) => {
     const todos = all(
@@ -50,11 +56,15 @@ router.get('/calendar', (req, res) => {
 
   const year = Number(req.query.year) || new Date().getFullYear();
   const month = Number(req.query.month) || new Date().getMonth() + 1;
+  if (!Number.isInteger(year) || year < 1900 || year > 9999 || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ error: 'invalid_date' });
+  }
   const from = `${year}-${String(month).padStart(2, '0')}-01`;
-  const to = `${year}-${String(month).padStart(2, '0')}-31`;
+  const to = `${year}-${String(month).padStart(2, '0')}-${new Date(Date.UTC(year, month, 0)).getUTCDate()}`;
 
   const ids = scope.categories.map((c) => c.id);
   if (ids.length === 0) return res.json({ year, month, days: [] });
+  ensureOccurrences(ids, from, to);
 
   const colorById = new Map(scope.categories.map((c) => [c.id, c.color]));
   const rows = all(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/models.dart';
+import '../models/routine.dart';
 
 class ApiException implements Exception {
   ApiException(this.statusCode, this.code, [this.detail]);
@@ -18,6 +19,8 @@ class ApiException implements Exception {
         'owner_must_transfer_or_empty_crew' => '크루원이 남아 있는 동안에는 방장이 나갈 수 없어요.',
         'google_oauth_not_configured' => '서버에 구글 로그인 설정이 없어요.',
         'unauthorized' => '로그인이 만료되었어요. 다시 로그인해 주세요.',
+        'routine_changed' => '다른 곳에서 수정된 반복 일정이에요. 목록으로 돌아가 다시 열어 주세요.',
+        'routine_date_changed' => '날짜가 바뀌었어요. 삭제할 기록을 다시 확인해 주세요.',
         'image_too_large' => '이미지가 너무 커요. 5MB 이하로 올려주세요.',
         'unsupported_image_type' => 'png, jpg, gif, webp 만 올릴 수 있어요.',
         _ => detail ?? '요청을 처리하지 못했어요. ($code)',
@@ -181,6 +184,26 @@ class ApiClient {
       })) as Map<String, dynamic>);
 
   Future<void> deleteTodo(int id) => _send('DELETE', '/todos/$id');
+
+  // ----- 반복 일정 -----
+
+  Future<List<Routine>> routines() async => ((await _get('/routines')) as List)
+      .map((j) => Routine.fromJson(j as Map<String, dynamic>)).toList();
+
+  Future<RoutinePreview> previewRoutine(Map<String, dynamic> input) async =>
+      RoutinePreview.fromJson((await _send('POST', '/routines/preview', body: input)) as Map<String, dynamic>);
+
+  Future<Routine> saveRoutine(Map<String, dynamic> input, {int? id}) async =>
+      Routine.fromJson((await _send(id == null ? 'POST' : 'PATCH', id == null ? '/routines' : '/routines/$id', body: input)) as Map<String, dynamic>);
+
+  Future<RoutineDeletionPreview> previewRoutineDeletion(int id) async =>
+      RoutineDeletionPreview.fromJson((await _get('/routines/$id/deletion-preview')) as Map<String, dynamic>);
+
+  Future<void> deleteRoutine(int id, {required String asOfDate, required bool keepPastDone,
+    required bool keepPastUndone, required bool removeToday}) => _send('DELETE', '/routines/$id', body: {
+      'asOfDate': asOfDate, 'keepPastDone': keepPastDone,
+      'keepPastUndone': keepPastUndone, 'removeToday': removeToday,
+    });
 
   // ----- 크루 -----
 

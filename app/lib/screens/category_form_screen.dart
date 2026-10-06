@@ -51,7 +51,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('카테고리를 삭제할까요?'),
-        content: const Text('이 카테고리에 담긴 모든 날짜의 TODO 도 함께 사라져요.'),
+        content: const Text('이 카테고리에 담긴 모든 날짜의 TODO와 반복 일정도 함께 사라져요.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('취소')),
           TextButton(
