@@ -1,0 +1,55 @@
+name: 서버 배포
+
+# v 태그가 올라가면 앱 릴리스와 같은 버전으로 운영 서버를 배포한다.
+# 서버만 급히 고칠 때는 태그를 하나 더 올리거나, Actions 탭에서 태그를 골라 수동 실행한다.
+#
+# 배포 잡은 운영 서버의 self-hosted 러너(라벨 todobuddy-prod)에서 돈다.
+# 공개 저장소라 pull_request 트리거는 절대 붙이지 말 것 — 포크 PR 의 코드가 운영 서버에서 돌게 된다.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '배포할 태그 (예: v0.3.0)'
+        required: true
+
+concurrency:
+  group: server-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  test:
+    name: 서버 테스트
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci --workspace server
+
+      - name: 테스트
+        run: npm run test:server
+
+  deploy:
+    name: 운영 배포
+    needs: test
+    runs-on: [todobuddy-prod]
+    steps:
+      # 러너 계정은 이 스크립트를 ubuntu 로 실행하는 것만 허용돼 있다 (/etc/sudoers.d/todobuddy-deploy).
+      # 스크립트 원본은 server/deploy/todobuddy-deploy.sh 다.
+      - name: 배포
+        run: sudo -n -H -u ubuntu /usr/local/bin/todobuddy-deploy "$TAG"

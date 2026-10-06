@@ -1,0 +1,16 @@
+# /etc/systemd/system/todobuddy-server.service
+# node 경로는 nvm 이 깐 위치다. nvm 으로 Node 를 올리면 여기와 todobuddy-deploy 의 NODE_BIN 을 같이 바꿀 것.
+[Unit]
+Description=TodoBuddy API server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/todobuddy/server
+ExecStart=/home/ubuntu/.nvm/versions/node/v24.21.0/bin/node --env-file-if-exists=.env src/index.js
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
