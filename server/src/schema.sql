@@ -61,6 +61,35 @@ CREATE TABLE IF NOT EXISTS category_shares (
   PRIMARY KEY (category_id, target_type, target_id)
 );
 
+-- Rules are versioned so an unvisited past date keeps its original schedule.
+CREATE TABLE IF NOT EXISTS routines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  time_zone TEXT NOT NULL DEFAULT 'Asia/Seoul',
+  deleted_on TEXT,
+  keep_past_undone INTEGER NOT NULL DEFAULT 1,
+  keep_today INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_routines_category ON routines(category_id);
+
+CREATE TABLE IF NOT EXISTS routine_versions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  routine_id INTEGER NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  rule_json TEXT NOT NULL,
+  start_date TEXT NOT NULL,
+  end_date TEXT,
+  valid_from TEXT NOT NULL,
+  valid_until TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_routine_versions ON routine_versions(routine_id, id);
+
+CREATE TABLE IF NOT EXISTS routine_exceptions (
+  routine_id INTEGER NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  PRIMARY KEY (routine_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS todos (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   category_id  INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
@@ -68,6 +97,8 @@ CREATE TABLE IF NOT EXISTS todos (
   title        TEXT NOT NULL,
   done         INTEGER NOT NULL DEFAULT 0,
   sort_order   INTEGER NOT NULL DEFAULT 0,
-  created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  routine_id   INTEGER REFERENCES routines(id) ON DELETE CASCADE,
+  routine_override INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_todos_cat_date ON todos(category_id, date, sort_order);

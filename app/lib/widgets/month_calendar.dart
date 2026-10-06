@@ -131,7 +131,8 @@ class _Header extends StatelessWidget {
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
           tooltip: '이전 달',
-          onPressed: () => onChangeMonth(DateTime(month.year, month.month - 1)),
+          onPressed: month.year == 1900 && month.month == 1 ? null
+              : () => onChangeMonth(DateTime(month.year, month.month - 1)),
         ),
         IconButton(
           icon: const Icon(Icons.chevron_right_rounded, size: 20),
@@ -139,7 +140,8 @@ class _Header extends StatelessWidget {
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(tapTargetSize: MaterialTapTargetSize.shrinkWrap),
           tooltip: '다음 달',
-          onPressed: () => onChangeMonth(DateTime(month.year, month.month + 1)),
+          onPressed: month.year == 9999 && month.month == 12 ? null
+              : () => onChangeMonth(DateTime(month.year, month.month + 1)),
         ),
       ],
     );
@@ -156,12 +158,12 @@ class _Header extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.chevron_left_rounded),
-                onPressed: () => setState(() => year--),
+                onPressed: year <= 1900 ? null : () => setState(() => year--),
               ),
               Text('$year년', style: const TextStyle(fontWeight: FontWeight.w800)),
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded),
-                onPressed: () => setState(() => year++),
+                onPressed: year >= 9999 ? null : () => setState(() => year++),
               ),
             ],
           ),

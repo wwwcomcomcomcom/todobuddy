@@ -12,6 +12,8 @@ import '../widgets/update_dialog.dart';
 import 'category_form_screen.dart';
 import 'category_manage_screen.dart';
 import 'people_screen.dart';
+import 'routine_form_screen.dart';
+import 'routine_manage_screen.dart';
 
 /// 메인 화면: 왼쪽에 프로필·캘린더, 오른쪽에 TODO 리스트.
 class HomeScreen extends StatelessWidget {
@@ -141,6 +143,10 @@ class _MainMenuButton extends StatelessWidget {
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryFormScreen()));
           case 'manage':
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryManageScreen()));
+          case 'routine_create':
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const RoutineFormScreen()));
+          case 'routine_manage':
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const RoutineManageScreen()));
           case 'people':
             await Navigator.push(context, MaterialPageRoute(builder: (_) => const PeopleScreen()));
           case 'today':
@@ -155,6 +161,17 @@ class _MainMenuButton extends StatelessWidget {
         await state.refreshAll();
       },
       itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: 'routine_create',
+          child: ListTile(contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.repeat_rounded), title: Text('반복 일정 추가')),
+        ),
+        PopupMenuItem(
+          value: 'routine_manage',
+          child: ListTile(contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.event_repeat_rounded), title: Text('반복 일정 관리')),
+        ),
+        PopupMenuDivider(),
         PopupMenuItem(
           value: 'create',
           child: ListTile(
