@@ -6,6 +6,7 @@ import '../api/google_sign_in.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/text_prompt_dialog.dart';
+import 'settings_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -139,6 +140,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppColors.sunday, fontSize: 13)),
                 ),
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                ),
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text('앱 설정'),
+              ),
             ],
           ),
         ),
