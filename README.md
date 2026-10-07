@@ -84,25 +84,6 @@ gh variable set TODOBUDDY_API --body "https://api.example.com"
 
 macOS 는 App Transport Security 때문에 `https` 가 아니면 요청이 막힙니다. 주소는 https 여야 합니다.
 
-## 컴퓨터 시작 시 자동 실행
-
-메인 화면의 **메뉴 → 앱 설정 → 컴퓨터 시작 시 자동 실행**을 켜면,
-컴퓨터에 로그인할 때 Todo Buddy 창이 자동으로 열립니다. 로그인 화면의 **앱 설정**에서도 바꿀 수 있습니다.
-처음에는 등록하지 않으며, 스위치를 끄면 자동 실행 등록을 해제합니다.
-설정은 TodoBuddy 계정과 무관하게 **현재 컴퓨터의 OS 사용자 계정**에 적용됩니다.
-
-- **Windows**: 현재 사용자의 `Run` 레지스트리에 실행 파일 경로를 등록합니다.
-  작업 관리자에서 사용 중지했다면 앱에 안내가 표시되며, **시스템 설정 열기**에서 다시 허용할 수 있습니다.
-- **macOS 13 이상**: `SMAppService`로 로그인 항목을 등록합니다. OS 승인이 필요하면 앱에 안내가 표시됩니다.
-- **macOS 12**: 사용자 `~/Library/LaunchAgents`에 로그인 시 실행하는 항목을 등록합니다.
-
-ZIP을 풀고 앱을 사용할 폴더로 옮긴 다음 켜 주세요. macOS에서는 응용 프로그램 폴더를 권장합니다.
-앱 위치를 옮겼다면 자동 실행을 껐다가 다시 켜 주세요. 앱 삭제 전에도 이 설정을 꺼 주세요.
-
-구현은 `app/lib/services/startup_service.dart`와 두 플랫폼의 Runner 코드에 있습니다.
-운영체제 API 참고: [Windows Run 키](https://learn.microsoft.com/en-us/windows/win32/setupapi/run-and-runonce-registry-keys),
-[macOS SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice).
-
 ## Google 로그인 붙이기
 
 Google Cloud Console에서 OAuth 클라이언트 ID를 **데스크톱 앱** 유형으로 만든 뒤:
