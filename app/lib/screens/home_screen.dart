@@ -14,6 +14,7 @@ import 'category_manage_screen.dart';
 import 'people_screen.dart';
 import 'routine_form_screen.dart';
 import 'routine_manage_screen.dart';
+import 'settings_screen.dart';
 import 'todomate_import_screen.dart';
 
 /// 메인 화면: 왼쪽에 프로필·캘린더, 오른쪽에 TODO 리스트.
@@ -157,6 +158,9 @@ class _MainMenuButton extends StatelessWidget {
           case 'check_update':
             await _checkForUpdateManually(context);
             return;
+          case 'settings':
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+            return;
           case 'signout':
             await state.signOut();
             return;
@@ -226,6 +230,14 @@ class _MainMenuButton extends StatelessWidget {
           ),
         ),
         PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'settings',
+          child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.settings_outlined),
+            title: Text('앱 설정'),
+          ),
+        ),
         PopupMenuItem(
           value: 'signout',
           child: ListTile(

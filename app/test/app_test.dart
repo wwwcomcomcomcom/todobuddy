@@ -69,6 +69,24 @@ void main() {
     expect(server.requests, contains('GET /board/calendar'));
   });
 
+  testWidgets('로그인 전에도 앱 설정을 열 수 있다', (tester) async {
+    await tester.pumpWidget(TodoBuddyApp(state: state));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('앱 설정'));
+    await tester.pumpAndSettle();
+    expect(find.text('컴퓨터 시작 시 자동 실행'), findsOneWidget);
+  });
+
+  testWidgets('메인 메뉴에서 앱 설정을 열 수 있다', (tester) async {
+    await signIn(tester);
+    await tester.tap(find.byIcon(Icons.menu_rounded));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('앱 설정'));
+    await tester.tap(find.text('앱 설정'));
+    await tester.pumpAndSettle();
+    expect(find.text('컴퓨터 시작 시 자동 실행'), findsOneWidget);
+  });
+
   for (final size in [const Size(1120, 720), const Size(800, 600), const Size(768, 600)]) {
     testWidgets('${size.width.toInt()}px 창에서 6주 캘린더와 TODO 를 스크롤 없이 나란히 보여준다', (tester) async {
       tester.view.physicalSize = size;

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../api/google_sign_in.dart';
 import '../models/models.dart';
+import '../services/startup_service.dart';
 
 String ymd(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -17,6 +18,7 @@ class AppState extends ChangeNotifier {
   AppState({ApiClient? api}) : api = api ?? ApiClient();
 
   final ApiClient api;
+  final StartupService _startupService = StartupService();
   static const _tokenKey = 'todobuddy.token';
 
   AuthStatus status = AuthStatus.unknown;
@@ -35,6 +37,56 @@ class AppState extends ChangeNotifier {
 
   bool loadingBoard = false;
   String? errorMessage;
+
+  StartupStatus? startupStatus;
+  bool startupBusy = false;
+  String? startupError;
+
+  Future<void> refreshStartupStatus() async {
+    if (startupBusy) return;
+    startupBusy = true;
+    startupError = null;
+    notifyListeners();
+    try {
+      startupStatus = await _startupService.getStatus();
+    } catch (_) {
+      startupStatus = null;
+      startupError = '자동 실행 설정을 불러오지 못했어요. 다시 시도해 주세요.';
+    } finally {
+      startupBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setStartupEnabled(bool enabled) async {
+    if (startupBusy) return;
+    startupBusy = true;
+    startupError = null;
+    notifyListeners();
+    try {
+      startupStatus = await _startupService.setEnabled(enabled);
+    } catch (_) {
+      // 등록 후 상태 조회만 실패했을 수도 있으므로 실제 상태를 다시 확인한다.
+      try {
+        startupStatus = await _startupService.getStatus();
+      } catch (_) {
+        startupStatus = null;
+      }
+      startupError = '자동 실행 설정을 바꾸지 못했어요. 다시 시도해 주세요.';
+    } finally {
+      startupBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> openStartupSettings() async {
+    try {
+      await _startupService.openSettings();
+    } catch (_) {
+      startupError = '시스템 설정을 열지 못했어요. 운영체제의 시작프로그램 설정을 직접 열어 주세요.';
+      notifyListeners();
+    }
+  }
 
   bool get isOwnScope => scope == 'me';
 
