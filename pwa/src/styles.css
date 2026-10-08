@@ -1,0 +1,71 @@
+@import 'tailwindcss';
+
+/* 앱(app/lib/theme.dart)·소개 사이트(web/app/globals.css)와 같은 팔레트. 한쪽을 바꾸면 다른 쪽도 맞출 것. */
+@theme {
+  --color-ink: #111111;
+  --color-subtle: #9aa0a6;
+  --color-chip: #f1f2f4;
+  --color-blob: #dde0e4;
+  --color-line: #e6e8eb;
+
+  --color-saturday: #3b82f6;
+  --color-sunday: #ef4444;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard Variable', Pretendard,
+    system-ui, 'Malgun Gothic', 'Noto Sans CJK KR', 'Noto Sans KR', NanumGothic, sans-serif;
+
+  --breakpoint-wide: 720px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: #ffffff;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: #f5c54355;
+  }
+}
+
+/* 앱의 SquircleBorder 를 흉내 낸 모서리. 정사각형 요소에만 쓴다 (web/ 과 같은 근사). */
+@utility squircle {
+  border-radius: 32%;
+}
+
+/* 노치·홈 인디케이터를 피하는 여백 (standalone 으로 설치했을 때). */
+@utility safe-px {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+@utility safe-pb {
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+@utility safe-pt {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
