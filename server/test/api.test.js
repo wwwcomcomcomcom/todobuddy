@@ -350,3 +350,21 @@ describe('반복 일정', () => {
     assert.equal((await api('/routines')).status, 401);
   });
 });
+
+describe('쿠키 세션 (TODOBUDDY_WEB_ORIGIN 미설정)', () => {
+  it('허용 목록이 없으면 Host 와 같은 출처의 쿠키 쓰기만 받는다', async () => {
+    const res = await fetch(`${base}/auth/dev`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: '같은출처' }),
+    });
+    const cookie = res.headers.getSetCookie().find((c) => c.startsWith('tb_session=')).split(';')[0];
+    const post = (origin) => fetch(`${base}/categories`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie, origin },
+      body: JSON.stringify({ name: '쿠키로 만든 것' }),
+    });
+    assert.equal((await post(base)).status, 201);
+    assert.equal((await post('http://localhost:5173')).status, 403);
+  });
+});

@@ -123,14 +123,19 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 
 ## API
 
-모든 경로는 `Authorization: Bearer <token>` 이 필요합니다 (`/auth/*` 일부 제외).
+모든 경로는 인증이 필요합니다 (`/auth/*` 일부 제외).
+데스크탑 앱은 `Authorization: Bearer <token>` 을, 웹 앱(PWA)은 같은 출처의 httpOnly 세션 쿠키(`tb_session`)를 씁니다.
+쿠키로 인증된 쓰기 요청은 `Origin` 이 `TODOBUDDY_WEB_ORIGIN` 과 같아야 하고 본문은 JSON 이어야 합니다.
 `scope` 는 `me` · `user:<id>` · `crew:<id>` 중 하나입니다.
 
 | 메서드 | 경로 | 설명 |
 | --- | --- | --- |
 | GET | `/auth/config` | 어떤 로그인 수단이 켜져 있는지 |
 | POST | `/auth/google` | `{code, codeVerifier, redirectUri}` → 세션 토큰 |
-| POST | `/auth/dev` | 개발용 로그인 |
+| GET | `/auth/google/start` | PWA 구글 로그인 시작 (구글로 302) |
+| GET | `/auth/google/callback` | 구글이 돌려보내는 곳. 세션 쿠키를 심고 PWA 로 302 |
+| POST | `/auth/dev` | 개발용 로그인 (토큰 + 세션 쿠키) |
+| POST | `/auth/logout` | 세션 쿠키 삭제 |
 | GET PATCH | `/auth/me` | 내 프로필 조회·수정 |
 | GET | `/board?scope=&date=` | 메인 화면 한 번에 (프로필 + 카테고리 + 그 날 TODO) |
 | GET | `/board/calendar?scope=&year=&month=` | 캘린더 색칠용 집계 |
@@ -153,6 +158,7 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 | POST | `/friends/request` | `{userId}` 또는 `{handle}` |
 | POST DELETE | `/friends/:id/accept`, `/friends/:id` | 수락 / 취소·거절·삭제 |
 | POST | `/uploads` | `{filename, dataBase64}` → `{url}` (프로필 사진) |
+| GET | `/todomate/config` | 투두메이트 Firebase 공개 설정 `{apiKey, projectId}`. `?refresh=1` 로 캐시 갱신 |
 
 ## 테스트
 

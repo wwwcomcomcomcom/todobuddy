@@ -13,6 +13,9 @@ import routineRoutes from './routes/routines.js';
 import crewRoutes from './routes/crews.js';
 import friendRoutes from './routes/friends.js';
 import uploadsRouter from './routes/uploads.js';
+import todomateRouter from './routes/todomate.js';
+import { rejectForeignOrigin } from './auth.js';
+import { createTodomateConfigSource } from './todomate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const UPLOAD_DIR = process.env.TODOBUDDY_UPLOAD_DIR ?? join(__dirname, '..', 'uploads');
@@ -20,6 +23,7 @@ mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const app = express();
 app.use(cors());
+app.use(rejectForeignOrigin);
 app.use(express.json({ limit: '8mb' }));
 app.use('/uploads', express.static(UPLOAD_DIR));
 
@@ -43,6 +47,7 @@ app.use('/routines', routineRoutes);
 app.use('/crews', crewRoutes);
 app.use('/friends', friendRoutes);
 app.use('/uploads', uploadsRouter(UPLOAD_DIR));
+app.use('/todomate', todomateRouter(createTodomateConfigSource()));
 
 app.use((err, _req, res, _next) => {
   console.error(err);
