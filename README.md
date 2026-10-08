@@ -1,12 +1,14 @@
 # TodoBuddy
 
-친구·크루와 하루치 할 일을 나눠 보는 크로스플랫폼 데스크탑 TODO 앱.
+친구·크루와 하루치 할 일을 나눠 보는 TODO 앱. 데스크탑(Flutter)과 웹 앱(PWA) 두 클라이언트가 같은 서버를 씁니다.
+데스크탑 앱은 PWA 로 옮기는 중입니다 — 계획과 진행 상황은 [`docs/pwa-migration-plan.md`](docs/pwa-migration-plan.md).
 
 한 저장소 안에 세 모듈이 들어 있습니다.
 
 | 모듈 | 내용 |
 | --- | --- |
-| `app/` | Flutter 클라이언트 |
+| `app/` | Flutter 데스크탑 클라이언트 (PWA 로 옮기는 중) |
+| `pwa/` | 웹 앱 클라이언트 (React + TypeScript + Vite, 설치 가능한 PWA) |
 | `server/` | Node.js + SQLite API 서버 (의존성: express, cors) |
 | `web/` | 소개 사이트 (Next.js + TypeScript + Tailwind). 랜딩·이용약관·개인정보 처리방침 |
 
@@ -17,7 +19,8 @@
 | macOS | 확인됨 | debug·release 빌드 및 실기 실행 확인 |
 | Windows | 확인됨 | GitHub Actions 의 `windows-latest` 에서 빌드·배포. macOS 호스트에서는 빌드 불가 |
 | Linux | 지원하지 않음 | 스캐폴드를 제거했습니다. 되살리려면 `flutter create --platforms=linux .` |
-| Web | 빌드만 가능 | 아래 참고 |
+| Web (Flutter) | 빌드만 가능 | 아래 참고. 웹은 `pwa/` 가 맡는다 |
+| PWA (`pwa/`) | 확인됨 | Chrome·Edge·Safari, iOS·Android 에 설치. 실기기 구글 로그인은 아직 미확인 |
 
 두 데스크탑 플랫폼은 **같은 코드**로 돕니다. 로그인 방식(loopback + PKCE)도 동일합니다.
 
@@ -40,6 +43,12 @@ cd app && flutter run -d macos     # 또는 -d windows
 ```
 
 로그인 화면에서 **이름만으로 시작하기(개발용)** 를 누르고 `하루` 를 입력하면 시드 계정으로 들어갑니다.
+
+웹 앱은 서버를 띄운 채로:
+
+```bash
+npm run pwa                        # http://localhost:5173  (/api 를 127.0.0.1:4000 으로 프록시)
+```
 
 개발용 로그인은 이름만으로 계정을 만드는 통로라 **기본은 꺼져 있습니다**.
 `.env` 의 `TODOBUDDY_ALLOW_DEV_LOGIN=true` 일 때만 열리고, 꺼져 있으면 로그인 화면에도 나타나지 않습니다.
@@ -84,6 +93,27 @@ gh variable set TODOBUDDY_API --body "https://api.example.com"
 
 macOS 는 App Transport Security 때문에 `https` 가 아니면 요청이 막힙니다. 주소는 https 여야 합니다.
 
+## 웹 앱 (PWA)
+
+`pwa/` 는 Flutter 앱의 모든 화면을 같은 서버 API 로 옮긴 React + TypeScript 앱입니다.
+서명·스토어 없이 HTTPS 주소 하나로 데스크탑·모바일에 설치됩니다.
+
+```bash
+npm run pwa            # 개발 서버 (localhost:5173)
+npm run pwa:build      # pwa/dist 정적 빌드 (서비스워커·매니페스트 포함)
+npm run pwa:preview    # 빌드 결과를 localhost:4173 에서 (같은 /api 프록시)
+npm run test:pwa       # Vitest 단위·컴포넌트 테스트
+npm run e2e:pwa        # Playwright e2e (실제 서버 + 빌드한 앱, 데스크탑·모바일 뷰포트)
+npm --workspace pwa run e2e:visual   # 스크린샷 비교. 실패하면 갱신 전에 눈으로 확인할 것
+```
+
+- **PWA 와 API 는 같은 출처**에서 서빙합니다. API 는 `/api` 아래에 두고 프록시가 접두어를 떼어 서버로 넘깁니다.
+  운영 예시는 [`server/deploy/nginx-todobuddy-pwa.conf`](server/deploy/nginx-todobuddy-pwa.conf).
+- 인증은 서버가 심는 httpOnly 쿠키(`tb_session`)입니다. 스크립트는 토큰을 볼 수 없습니다.
+- 서비스워커는 해시된 자산만 미리 받아 두고, 새 버전이 나오면 "새 버전이 있어요" 안내만 띄웁니다 (자동 새로고침 없음).
+  오프라인에서는 마지막으로 받은 껍데기와 "오프라인이에요" 화면을 보여줍니다. 오프라인 편집은 하지 않습니다.
+- 데스크탑 앱의 "컴퓨터 시작 시 자동 실행" 은 웹에서 켤 수 없어 빠졌습니다. 앱 설정에 설치 안내가 있습니다.
+
 ## Google 로그인 붙이기
 
 Google Cloud Console에서 OAuth 클라이언트 ID를 **데스크톱 앱** 유형으로 만든 뒤:
@@ -100,6 +130,14 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 3. 구글이 그 주소로 authorization code 를 돌려준다
 4. 앱은 code 만 서버로 넘기고, **토큰 교환은 서버가** 한다 (client_secret 은 앱에 두지 않는다)
 5. 서버가 자체 세션 토큰(HS256 JWT)을 발급한다
+
+웹 앱(PWA)은 브라우저가 포트를 열 수 없어서 **서버가 주도하는 리다이렉트 + PKCE** 를 씁니다.
+"웹 애플리케이션" 유형 클라이언트를 따로 만들어 `GOOGLE_WEB_CLIENT_ID` / `GOOGLE_WEB_CLIENT_SECRET` 과
+`TODOBUDDY_WEB_ORIGIN`(PWA 주소)을 채우고, 승인된 리디렉션 URI 에 `<PWA 주소>/api/auth/google/callback` 을 등록합니다.
+
+1. 로그인 버튼이 `/api/auth/google/start` 로 이동한다. 서버가 state·code_verifier 를 10분짜리 서명 쿠키에 담고 구글로 보낸다
+2. 구글이 `/api/auth/google/callback` 으로 돌려보내면 서버가 state 를 확인하고 토큰을 교환한다
+3. 서버가 세션 쿠키를 심고 PWA 로 돌려보낸다
 
 ## 도메인 정리
 
@@ -163,8 +201,10 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 ## 테스트
 
 ```bash
-npm test               # 서버 + 앱
-npm run test:server    # node --test (공개 범위·친구 관계·날짜 귀속 규칙)
+npm test               # 서버 + 웹 앱 + 데스크탑 앱
+npm run test:server    # node --test (공개 범위·친구 관계·날짜 귀속 규칙·쿠키 세션)
+npm run test:pwa       # vitest (스토어·할 일 편집·IME·투두메이트·반복 규칙)
+npm run e2e:pwa        # playwright (실제 서버로 기능 대조표 한 바퀴)
 npm run test:app       # flutter test (로그인 → 메인 화면 렌더 → 상호작용)
 ```
 
@@ -185,12 +225,15 @@ SQLite 파일은 `server/data/todobuddy.db`, 업로드한 프로필 사진은 `s
 
 ## 서버 배포
 
-`v` 로 시작하는 태그를 올리면 앱 릴리스와 함께 운영 서버도 같은 버전으로 배포됩니다.
-GitHub 호스팅 러너에서 서버 테스트가 통과하면, 운영 서버에 붙은 self-hosted 러너가
-DB 스냅샷 → 태그 체크아웃 → 재시작 → 헬스체크 순으로 배포하고, 실패하면 이전 버전으로 되돌립니다.
+`v` 로 시작하는 태그를 올리면 앱 릴리스와 함께 운영 서버와 웹 앱도 같은 버전으로 배포됩니다.
+GitHub 호스팅 러너에서 서버 테스트와 웹 앱 빌드가 통과하면, 운영 서버에 붙은 self-hosted 러너가
+DB 스냅샷 → 태그 체크아웃 → 웹 앱 빌드(`pwa/dist.next`) → 재시작 → 헬스체크 → 웹 앱 교체 순으로 배포하고,
+실패하면 이전 버전으로 되돌립니다 (웹 앱은 헬스체크를 통과할 때만 바뀝니다).
 서버만 다시 배포하려면 Actions 탭의 **서버 배포** 워크플로를 태그를 골라 수동 실행합니다.
 
-운영 서버에 깔린 배포 스크립트와 systemd 유닛의 원본은 `server/deploy/` 에 있습니다.
+운영 서버에 깔린 배포 스크립트와 systemd 유닛, 리버스 프록시 예시의 원본은 `server/deploy/` 에 있습니다.
+
+PR 과 master 에는 `.github/workflows/pwa-ci.yml` 이 서버 테스트·웹 앱 단위 테스트·빌드·e2e 를 돌립니다 (GitHub 호스팅 러너).
 
 ## 알아 둘 것
 

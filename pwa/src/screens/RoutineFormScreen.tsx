@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
-import { Button, ChipToggle, ErrorText, LinearProgress, ScreenHeader, SectionTitle, Segmented, Spinner, Switch, inputClass } from '../components/ui';
+import { useNavigate, useParams } from 'react-router';
+import { Button, ChipToggle, ErrorText, LinearProgress, ScreenHeader, SectionTitle, useGoBack, Segmented, Spinner, Switch, inputClass } from '../components/ui';
 import { errorMessage } from '../lib/api';
 import { isoWeekday, weekdayNames } from '../lib/date';
 import { isSubmitEnter } from '../lib/keys';
@@ -17,15 +17,6 @@ const MAX_DATE = '9999-12-31';
 /** iOS 는 16px 보다 작은 입력칸에 초점이 가면 화면을 확대한다. 터치 기기에서는 16px 로 키운다. */
 const touchInput = inputClass;
 
-/** 뒤로: 앱 안에서 들어왔으면 이전 화면으로, 주소로 바로 열었으면 목록으로. */
-function useGoBack() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  return useCallback(() => {
-    if (location.key !== 'default') void navigate(-1);
-    else void navigate('/routines', { replace: true });
-  }, [navigate, location.key]);
-}
 
 /** `/routines/new` 는 바로 폼을, `/routines/:id` 는 반복 일정을 읽은 뒤 폼을 보여준다. */
 export default function RoutineFormScreen() {
@@ -70,7 +61,7 @@ function RoutineLoader({ id }: { id: string }) {
 function RoutineForm({ routine }: { routine: Routine | null }) {
   const store = useStore();
   const navigate = useNavigate();
-  const goBack = useGoBack();
+  const goBack = useGoBack('/routines');
   const editing = routine != null;
   const timeZone = routine?.timeZone ?? 'Asia/Seoul';
 

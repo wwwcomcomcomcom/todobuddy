@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 운영 서버 배포. self-hosted 러너(github-runner 계정)가 `sudo -H -u ubuntu` 로 부른다.
+# 서버(systemd)와 웹 앱(pwa/dist, 리버스 프록시가 정적으로 서빙)을 같은 태그로 바꾼다.
 #
 #   todobuddy-deploy v0.3.0
 #
@@ -13,6 +14,7 @@ DB="$REPO_DIR/server/data/todobuddy.db"
 BACKUP_DIR=/home/ubuntu/todobuddy-backups
 KEEP_BACKUPS=30
 SERVICE=todobuddy-server
+PWA_DIR="$REPO_DIR/pwa"
 NODE_BIN=/home/ubuntu/.nvm/versions/node/v24.21.0/bin
 
 export HOME=/home/ubuntu
@@ -63,13 +65,29 @@ if [[ -f "$DB" ]]; then
 fi
 
 deps_changed() {
-  ! git diff --quiet "$1" "$2" -- package-lock.json package.json server/package.json
+  ! git diff --quiet "$1" "$2" -- package-lock.json package.json server/package.json pwa/package.json
 }
 
 # web 이 같은 체크아웃의 node_modules 를 쓰며 돌고 있으므로 npm ci (전부 지우고 새로 깔기) 는 쓰지 않는다.
 install_deps() {
   npm install --no-audit --no-fund
   git checkout -q -- package-lock.json
+}
+
+# 웹 앱은 dist.next 에 따로 빌드해 두고, 서버가 건강할 때만 dist 와 바꿔 끼운다.
+# 빌드 도중에도 프록시는 기존 dist 를 계속 서빙하고, 바꿔 끼우기는 mv 두 번이라 순간이다.
+build_pwa() {
+  [[ -f "$PWA_DIR/package.json" ]] || return 0
+  rm -rf "$PWA_DIR/dist.next"
+  (cd "$PWA_DIR" && TODOBUDDY_APP_VERSION="$TAG" npx vite build --outDir dist.next --emptyOutDir --logLevel warn)
+}
+
+swap_in_pwa() {
+  [[ -d "$PWA_DIR/dist.next" ]] || return 0
+  rm -rf "$PWA_DIR/dist.prev"
+  if [[ -d "$PWA_DIR/dist" ]]; then mv "$PWA_DIR/dist" "$PWA_DIR/dist.prev"; fi
+  mv "$PWA_DIR/dist.next" "$PWA_DIR/dist"
+  echo "== 웹 앱 교체: $PWA_DIR/dist"
 }
 
 healthy() {
@@ -86,11 +104,26 @@ if deps_changed "$PREV" "$NEXT"; then
   install_deps
 fi
 
+# 웹 앱 빌드가 깨지면 서버를 건드리기 전에 멈추고 원래대로 돌려 둔다.
+if ! build_pwa; then
+  echo "== 웹 앱 빌드 실패. ${PREV:0:7} 로 되돌리고 멈춘다 (서버는 재시작하지 않았다)" >&2
+  rm -rf "$PWA_DIR/dist.next"
+  git checkout -q --detach "$PREV"
+  if deps_changed "$PREV" "$NEXT"; then
+    install_deps
+  fi
+  exit 1
+fi
+
 sudo -n systemctl restart "$SERVICE"
 if healthy; then
+  swap_in_pwa
   echo "== 배포 완료: $TAG (${NEXT:0:7})"
   exit 0
 fi
+
+# 서버가 안 뜨면 웹 앱도 바꾸지 않는다 (dist 는 이전 버전 그대로다).
+rm -rf "$PWA_DIR/dist.next"
 
 echo "== 헬스체크 실패. ${PREV:0:7} 로 되돌린다" >&2
 sudo -n journalctl -u "$SERVICE" -n 40 --no-pager >&2 || true

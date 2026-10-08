@@ -23,7 +23,7 @@ describe('로그인과 메인 화면', () => {
     // 왼쪽: 프로필과 캘린더
     expect(screen.getByText('프로필에 자기소개를 입력해보세요')).toBeTruthy();
     expect(screen.getByText('2026년 9월')).toBeTruthy();
-    expect(screen.getByRole('button', { name: '2026년 9월 15일, 남은 할 일 1개' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '15일, 2026년 9월, 남은 할 일 1개' })).toBeTruthy();
 
     // 오른쪽: 카테고리와 TODO
     expect(screen.getByText('회사에서 할 일')).toBeTruthy();
@@ -37,7 +37,7 @@ describe('로그인과 메인 화면', () => {
   it('캘린더 칸은 카테고리 색 띠를 쌓아 칠한다', async () => {
     const ctx = renderApp();
     await signIn(ctx);
-    const cell = screen.getByRole('button', { name: /2026년 9월 15일/ });
+    const cell = screen.getByRole('button', { name: /^15일, 2026년 9월/ });
     const colors = [...cell.querySelectorAll('[data-color]')].map((el) => el.getAttribute('data-color'));
     expect(colors).toEqual(['#EE8B8B', '#F5C543']);
   });
@@ -86,7 +86,7 @@ describe('로그인과 메인 화면', () => {
     await signIn(ctx);
     ctx.server.interceptor = (req) =>
       req.path === '/board' ? new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 }) : undefined;
-    await ctx.user.click(screen.getByRole('button', { name: /2026년 9월 16일/ }));
+    await ctx.user.click(screen.getByRole('button', { name: /^16일, 2026년 9월/ }));
     expect(await screen.findByText('로그인이 만료되었어요. 다시 로그인해 주세요.')).toBeTruthy();
   });
 });

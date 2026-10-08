@@ -4,14 +4,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 구조
 
-npm 워크스페이스 하나에 세 모듈이 들어 있다. `app/` (Flutter 클라이언트), `server/` (Node.js + SQLite API),
-`web/` (Next.js 소개 사이트). 루트에서 `npm run ...` 로 돌린다. 도메인 설명과 API 표는 @README.md 참고.
+npm 워크스페이스 하나에 네 모듈이 들어 있다. `app/` (Flutter 데스크탑 클라이언트), `pwa/` (React + TS 웹 앱, PWA),
+`server/` (Node.js + SQLite API), `web/` (Next.js 소개 사이트). 루트에서 `npm run ...` 로 돌린다. 도메인 설명과 API 표는 @README.md 참고.
+데스크탑 앱을 PWA 로 옮기는 중이다. 계획·진행 상황·남은 일은 `docs/pwa-migration-plan.md` (Phase 6 전까지는 `app/` 도 계속 돌아야 한다).
 
 ## 명령어
 
 ```bash
-npm test            # 서버 + 앱 (golden 제외)
+npm test            # 서버 + 웹 앱 + 데스크탑 앱 (golden 제외)
 npm run test:server # node --test
+npm run test:pwa    # vitest (pwa 단위·컴포넌트)
+npm run e2e:pwa     # playwright (실제 서버 + 빌드한 pwa, @visual 제외)
+npm run pwa         # 웹 앱 개발 서버 (localhost:5173, /api → 127.0.0.1:4000)
+npm run pwa:build   # pwa/dist
 npm run test:app    # flutter test --exclude-tags golden
 npm run test:golden # 골든만. 실패하면 --update-goldens 전에 렌더 결과를 눈으로 확인할 것
 npm run server      # 서버 (기본 127.0.0.1:4000)
@@ -22,6 +27,8 @@ npm run web:build   # 소개 사이트 정적 빌드
 
 - 서버 테스트는 **인자 없는 `node --test`** 여야 한다. `node --test test/` 는 `MODULE_NOT_FOUND` 로 죽는다.
 - 앱 코드를 고친 뒤에는 `cd app && flutter analyze` 도 돌린다. 경고 0 을 유지하고 있다.
+- 웹 앱을 고친 뒤에는 `npm --workspace pwa run typecheck` (e2e 포함) 도 돌린다.
+- `npm --workspace pwa run e2e:visual` 이 실패하면 `--update-snapshots` 전에 렌더 결과를 눈으로 확인할 것. 기준 이미지는 리눅스 글꼴로 뜬 것이라 CI 에서는 돌리지 않는다.
 
 ## 서버
 
@@ -32,6 +39,11 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 바인드 주소는 `HOST` 로 정하고 기본은 `127.0.0.1` 이다. 리버스 프록시가 다른 네임스페이스에 있으면 `0.0.0.0` 이어야 닿는다. 기본값을 바꾸지 말 것 — 열어야 하는 쪽이 명시적으로 켠다.
 - 개발용 로그인(`POST /auth/dev`)은 기본 비활성이다. `TODOBUDDY_ALLOW_DEV_LOGIN=true` 일 때만 열린다. 서버 테스트는 spawn 할 때 이 값을 켜서 띄운다.
 - 개발용 로그인 계정의 이메일은 `auth.js` 의 `devEmail()` 로 만든다. 시드와 라우트가 같은 함수를 써야 시드 계정으로 로그인된다.
+- 인증은 두 갈래다. 데스크탑 앱은 `Authorization: Bearer`, PWA 는 httpOnly 쿠키 `tb_session` (같은 JWT). 둘 다 `requireAuth` 가 받는다.
+  **쿠키로 인증된 쓰기는 `Origin` 이 PWA 출처(`TODOBUDDY_WEB_ORIGIN`, 비면 Host 와 같은 출처)이고 본문이 JSON 이어야 한다** (CSRF). 새 쓰기 라우트도 `requireAuth` 를 거치면 자동으로 걸린다.
+  다른 출처의 쓰기는 인증 방식과 무관하게 `rejectForeignOrigin` 이 막는다 (데스크탑 앱은 Origin 을 보내지 않는다).
+- PWA 의 구글 로그인은 `/auth/google/start` → `/auth/google/callback` (서버 리다이렉트 + PKCE, "웹 애플리케이션" 클라이언트 `GOOGLE_WEB_*`). 데스크탑의 `POST /auth/google` 은 전환 기간 동안 그대로 둔다.
+- `/todomate/config` 는 고정 주소의 투두메이트 공개 설정(apiKey·projectId)만 중계한다. 요청자가 주소를 정하게 만들지 말 것. 투두메이트 비밀번호·토큰·일정은 서버를 지나가지 않는다.
 
 ## 서버 배포
 
@@ -43,10 +55,12 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 러너 계정이 할 수 있는 건 `/usr/local/bin/todobuddy-deploy <태그>` 를 `ubuntu` 로 실행하는 것뿐이다.
   원본은 `server/deploy/todobuddy-deploy.sh` 지만 운영 서버의 사본은 root 소유라 **저장소에서 고쳐도 자동 반영되지 않는다.** 고쳤으면 직접 다시 깔 것.
   systemd 유닛(`server/deploy/todobuddy-server.service`)도 마찬가지다.
-- 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → `systemctl restart todobuddy-server` → `/health` 확인 순이고,
-  헬스체크가 실패하면 이전 커밋으로 되돌린다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
+- 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → 웹 앱 빌드(`pwa/dist.next`) → `systemctl restart todobuddy-server` → `/health` 확인 → `pwa/dist` 교체 순이고,
+  헬스체크가 실패하면 이전 커밋으로 되돌린다 (웹 앱은 바꾸지 않는다). 웹 앱 빌드가 깨지면 서버를 재시작하기 전에 멈춘다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
 - 운영 서버의 Node 는 nvm 경로(`~/.nvm/versions/node/v24.21.0`)를 직접 가리킨다. Node 를 올리면 유닛과 배포 스크립트의 경로를 같이 바꿀 것.
 - 웹(`web/`, 3000 포트)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다.
+- 웹 앱(`pwa/dist`)은 리버스 프록시가 정적으로 서빙한다 (`/api/` → 서버, 접두어 제거). 예시 `server/deploy/nginx-todobuddy-pwa.conf`. 이것도 저장소에서 고쳐도 자동 반영되지 않는다.
+- `.github/workflows/pwa-ci.yml` 은 `pull_request` 트리거가 있으므로 **GitHub 호스팅 러너만** 쓴다. 운영 러너를 붙이지 말 것.
 
 ## 도메인 불변식
 
@@ -75,12 +89,25 @@ npm run web:build   # 소개 사이트 정적 빌드
   Mac App Store 배포가 아니라 GitHub ZIP 배포라 샌드박스가 필수는 아니었고, 샌드박스 상태에서는
   앱이 자기 번들 경로에 쓸 권한이 없어 자체 업데이트가 불가능했다.
 
+## 웹 앱 (`pwa/`)
+
+- Vite + React + TypeScript SPA. Tailwind v4, 토큰은 `src/styles.css` 의 `@theme`. 색은 `theme.dart`·`web/` 과 같은 팔레트다 — 셋 중 하나를 바꾸면 나머지도 맞출 것.
+- 상태는 `src/state/store.ts` 의 `AppStore` 하나뿐이다 (Flutter `AppState` 를 옮긴 것). 화면은 `useApp()`·`useStore()` 로만 상태를 다룬다. 쓰기는 `guard()` 로 감싸 보드를 다시 읽는다.
+- 서버와는 `src/lib/api.ts` 의 `Api` 만 통한다. 항상 같은 출처 `/api` + 쿠키다. 토큰을 스크립트에 두지 말 것.
+- 의존성은 `docs/pwa-migration-plan.md` 의 "결정 사항" 표에 있는 것만 쓴다. 추가하면 그 문서에 이유를 남긴다. 아이콘은 `components/Icon.tsx` 에 경로만 옮겨 적는다.
+- **Enter 로 제출하는 입력은 `lib/keys.ts` 의 `isSubmitEnter` 를 거친다.** 한글 IME 조합 중 Enter(isComposing / keyCode 229)를 제출로 받으면 글자가 남거나 사라진다.
+- 다이얼로그는 `openDialog()`/`confirmDialog()`/`promptDialog()` 로 띄우고, 입력 상태는 **다이얼로그 내용 컴포넌트가 소유**한다 (Flutter 의 TextEditingController 규칙과 같은 이유).
+- 할 일 행: 마우스는 더블 클릭, 터치는 탭으로 수정한다 (`pointerType`). 호버 버튼은 자리를 늘 잡아 두어 행 높이가 바뀌지 않게 한다. 터치 기기의 수정창에만 삭제 버튼이 있다.
+- 서비스워커(`vite-plugin-pwa`)는 해시 자산만 프리캐시하고 화면 이동은 네트워크 우선이다. **새 버전을 자동으로 새로고침하지 말 것** — 입력 중이던 내용이 날아간다. 안내(`UpdateToast`)만 띄운다.
+- 뒤로 가기는 `useGoBack()` 을 쓴다 (`history.length` 는 앱 밖 기록까지 센다).
+- 라우트를 늘리면 `App.tsx` 에 `lazy()` 로 붙인다. 로그아웃 상태에서도 열리는 건 `/settings` 뿐이다.
+
 ## 웹 (`web/`)
 
 - 앱과 서버를 건드리지 않는 **독립된 소개 사이트**다. 서버 API 를 부르지 않고, 모든 페이지가 정적으로 프리렌더된다.
   여기에 API 를 옮기거나 `server/` 를 이쪽으로 흡수하지 말 것.
 - Next.js App Router + TypeScript + Tailwind v4. Tailwind 설정 파일은 없고 색·폰트 토큰은 `app/globals.css` 의 `@theme` 에 둔다.
-- 색은 `app/lib/theme.dart` 의 팔레트를 그대로 옮겨 적은 것이다. 한쪽을 바꾸면 다른 쪽도 맞춰야 한다.
+- 색은 `app/lib/theme.dart` 의 팔레트를 그대로 옮겨 적은 것이다. 한쪽을 바꾸면 다른 쪽(`pwa/src/styles.css`·`pwa/src/lib/colors.ts` 포함)도 맞춰야 한다.
 - 헤더 로고(`components/CloverMark.tsx`)의 네 하트 색은 실제 앱 아이콘 PNG 에서 뽑았다. 앱 아이콘을 바꾸면 여기도 다시 뽑을 것.
 - 배포용 상수(저장소 슬러그·사이트 주소·문의 메일)는 `lib/site.ts` 한 곳에만 둔다. 지금은 자리표시자라 배포 전에 채워야 한다.
 - 이용약관·개인정보 처리방침의 내용은 실제 동작과 맞아야 한다. 수집 항목·공개 범위·삭제 범위를 바꾸면 `app/privacy/page.tsx` 도 같이 고칠 것.

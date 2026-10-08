@@ -1,5 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { Icon, type IconName } from './Icon';
 
 type Variant = 'filled' | 'outlined' | 'text' | 'tonal' | 'danger' | 'dangerText';
@@ -55,12 +55,25 @@ export function IconButton({
   );
 }
 
+/**
+ * 뒤로: 앱 안에서 들어왔으면 이전 화면으로, 주소로 바로 열었으면(이전 기록이 앱 밖이면) fallback 으로.
+ * history.length 는 다른 사이트의 기록까지 세므로 쓰지 않는다.
+ */
+export function useGoBack(fallback = '/') {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return () => {
+    if (location.key !== 'default') void navigate(-1);
+    else void navigate(fallback, { replace: true });
+  };
+}
+
 /** 하위 화면의 상단 막대. 뒤로 가기 + 가운데 제목 + 오른쪽 동작. */
 export function ScreenHeader({
   title, onBack, action, backDisabled = false,
 }: { title: string; onBack?: () => void; action?: ReactNode; backDisabled?: boolean }) {
-  const navigate = useNavigate();
-  const back = onBack ?? (() => (window.history.length > 1 ? navigate(-1) : navigate('/')));
+  const goBack = useGoBack();
+  const back = onBack ?? goBack;
   return (
     <header className="safe-pt safe-px sticky top-0 z-20 bg-white/95 backdrop-blur">
       <div className="mx-auto grid h-14 max-w-3xl grid-cols-[3rem_1fr_auto] items-center gap-2">

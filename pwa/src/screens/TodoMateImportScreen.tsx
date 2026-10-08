@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Icon } from '../components/Icon';
 import { toast } from '../components/toast';
 import { CategoryPill, TodoCheckbox } from '../components/TodoColumn';
-import { Button, ErrorText, inputClass, LinearProgress, ScreenHeader, visibilityIcon } from '../components/ui';
+import { Button, ErrorText, inputClass, LinearProgress, ScreenHeader, useGoBack, visibilityIcon } from '../components/ui';
 import { ApiError } from '../lib/api';
 import { addDays, todayYmd } from '../lib/date';
 import { isSubmitEnter } from '../lib/keys';
@@ -56,13 +56,13 @@ export default function TodoMateImportScreen() {
     };
   }, []);
 
+  const leave = useGoBack();
   const goBack = () => {
     if (busy) return;
     setError(null);
     switch (step) {
       case 'login':
-        if (window.history.length > 1) navigate(-1);
-        else navigate('/');
+        leave();
         break;
       case 'range':
         setStep('login');

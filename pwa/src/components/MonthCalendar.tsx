@@ -102,7 +102,7 @@ function DayCell({
         onClick={onSelect}
         aria-pressed={selected}
         aria-current={isToday ? 'date' : undefined}
-        aria-label={`${y}년 ${m}월 ${day}일, ${status}`}
+        aria-label={`${day}일, ${y}년 ${m}월, ${status}`}
         className="flex h-[52px] w-full max-w-12 flex-col items-center justify-center gap-1 rounded-[14px] hover:bg-chip/70"
       >
         <DayBlob segments={segments} remaining={remaining} />
@@ -120,9 +120,9 @@ function DayCell({
 
 /** 날짜 칸의 색 블록. 카테고리가 여러 개면 색을 가로 띠로 나눠 쌓는다. */
 function DayBlob({ segments, remaining }: { segments: DaySegment[]; remaining: number }) {
-  if (segments.length === 0) return <span className="squircle block size-6 bg-blob" data-testid="day-blob" />;
+  if (segments.length === 0) return <span aria-hidden="true" className="squircle block size-6 bg-blob" data-testid="day-blob" />;
   return (
-    <span className="squircle relative flex size-6 flex-col overflow-hidden" data-testid="day-blob">
+    <span aria-hidden="true" className="squircle relative flex size-6 flex-col overflow-hidden" data-testid="day-blob">
       {segments.map((s) => (
         <span key={s.categoryId} className="block flex-1" style={{ background: s.color }} data-color={s.color} />
       ))}

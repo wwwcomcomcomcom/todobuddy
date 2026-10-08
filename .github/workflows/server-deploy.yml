@@ -1,6 +1,6 @@
 name: 서버 배포
 
-# v 태그가 올라가면 앱 릴리스와 같은 버전으로 운영 서버를 배포한다.
+# v 태그가 올라가면 앱 릴리스와 같은 버전으로 운영 서버와 웹 앱(pwa/)을 배포한다.
 # 서버만 급히 고칠 때는 태그를 하나 더 올리거나, Actions 탭에서 태그를 골라 수동 실행한다.
 #
 # 배포 잡은 운영 서버의 self-hosted 러너(라벨 todobuddy-prod)에서 돈다.
@@ -26,7 +26,7 @@ env:
 
 jobs:
   test:
-    name: 서버 테스트
+    name: 서버 테스트 · 웹 앱 빌드
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -38,11 +38,22 @@ jobs:
           node-version: '24'
           cache: npm
 
+      # pwa/ 가 생기기 전 태그를 수동으로 다시 배포할 때도 돌도록 있을 때만 함께 깐다.
       - name: 의존성 설치
-        run: npm ci --workspace server
+        run: |
+          if [ -f pwa/package.json ]; then
+            npm ci --workspace server --workspace pwa --include-workspace-root
+          else
+            npm ci --workspace server
+          fi
 
       - name: 테스트
         run: npm run test:server
+
+      # 운영 서버가 같은 태그로 웹 앱(pwa/)을 빌드한다. 깨진 태그는 여기서 걸러낸다.
+      - name: 웹 앱 테스트 · 빌드
+        if: hashFiles('pwa/package.json') != ''
+        run: npm run test:pwa && npm run pwa:build
 
   deploy:
     name: 운영 배포

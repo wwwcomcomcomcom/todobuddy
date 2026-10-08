@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { Avatar } from '../components/Avatar';
 import { confirmDialog } from '../components/dialogs';
 import { Icon } from '../components/Icon';
 import { pickColor, pickVisibility } from '../components/pickers';
 import { Button, ErrorText, SettingRow, Spinner, visibilityIcon } from '../components/ui';
-import { ScreenHeader } from '../components/ui';
+import { ScreenHeader, useGoBack } from '../components/ui';
 import { errorMessage } from '../lib/api';
 import { palette } from '../lib/colors';
 import { isSubmitEnter } from '../lib/keys';
@@ -18,7 +18,6 @@ const sameTarget = (a: ShareTarget, b: ShareTarget) => a.targetType === b.target
 export default function CategoryFormScreen() {
   const { id } = useParams();
   const store = useStore();
-  const navigate = useNavigate();
   const editId = id == null ? null : Number(id);
 
   const [loaded, setLoaded] = useState<Category | null>(null);
@@ -30,7 +29,7 @@ export default function CategoryFormScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const back = () => (window.history.length > 1 ? navigate(-1) : navigate('/categories'));
+  const back = useGoBack('/categories');
 
   useEffect(() => {
     void store.refreshPeople();
