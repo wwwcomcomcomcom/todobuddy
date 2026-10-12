@@ -64,7 +64,7 @@ export function LoginScreen() {
   return (
     <main className="safe-px flex min-h-dvh items-center justify-center py-10">
       <div className="flex w-full max-w-[360px] flex-col items-center text-center">
-        <img src="/icon-192.png" alt="" width={72} height={72} className="mb-5 rounded-[22%]" />
+        <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" width={72} height={72} className="mb-5 rounded-[22%]" />
         <h1 className="text-[34px] font-black tracking-tight">Todo Buddy</h1>
         <p className="mt-2 text-sm text-subtle">친구·크루와 하루치 할 일을 나눠요</p>
 
