@@ -198,14 +198,14 @@ describe('구글 웹 로그인', () => {
 
     const wrong = await call('/auth/google/callback?code=abc&state=nope', { cookie });
     assert.equal(wrong.status, 302);
-    assert.equal(wrong.headers.get('location'), `${APP}/login?error=google_state_mismatch`);
+    assert.equal(wrong.headers.get('location'), `${APP}/app/login?error=google_state_mismatch`);
     assert.equal(cookieFrom(wrong.cookies, 'tb_session'), null);
 
     const missing = await call('/auth/google/callback?code=abc&state=nope');
-    assert.equal(missing.headers.get('location'), `${APP}/login?error=google_state_mismatch`);
+    assert.equal(missing.headers.get('location'), `${APP}/app/login?error=google_state_mismatch`);
 
     const cancelled = await call('/auth/google/callback?error=access_denied', { cookie });
-    assert.equal(cancelled.headers.get('location'), `${APP}/login?error=google_cancelled`);
+    assert.equal(cancelled.headers.get('location'), `${APP}/app/login?error=google_cancelled`);
   });
 });
 

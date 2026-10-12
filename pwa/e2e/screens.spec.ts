@@ -10,7 +10,7 @@ test('카테고리 공개 범위·공유 대상·색을 바꾸고 삭제한다',
   const crew = await apiPost<{ id: number; name: string }>(page, '/crews', { name: unique('크루') });
   const category = await apiPost(page, '/categories', { name: '편집할 것', visibility: 'private' });
 
-  await page.goto('/categories');
+  await page.goto('categories');
   await page.getByRole('button', { name: /^편집할 것.* 편집$/ }).click();
   await page.getByRole('button', { name: /공개설정/ }).click();
   await page.getByRole('dialog', { name: '공개설정' }).getByRole('radio', { name: '선택한 크루·친구' }).click();
@@ -33,36 +33,36 @@ test('반복 일정을 미리보기로 확인해 저장하고, 기록 옵션을 
   await devLogin(page, unique('반복'));
   await apiPost(page, '/categories', { name: '루틴', visibility: 'private' });
 
-  await page.goto('/routines/new');
+  await page.goto('routines/new');
   await page.getByPlaceholder('예: 책 20분 읽기').fill('물 마시기');
   await page.getByRole('radio', { name: '주마다' }).click();
   // 미리보기 5개가 나와야 저장할 수 있다.
   await expect(page.getByText(/^\d{4}-\d{2}-\d{2} \([월화수목금토일]\)$/)).toHaveCount(5);
   await page.getByRole('button', { name: '반복 일정 저장' }).click();
 
-  await page.goto('/routines');
+  await page.goto('routines');
   await expect(page.getByText('물 마시기')).toBeVisible();
   await expect(page.getByText(/^매주 /)).toBeVisible();
 
   // 오늘 요일로 만들었으니 메인의 오늘 목록에 반복 표시와 함께 보인다.
-  await page.goto('/');
+  await page.goto('./');
   await expect(todoTitle(page, '물 마시기')).toBeVisible();
   await expect(page.getByText('반복 일정', { exact: true })).toBeVisible();
 
-  await page.goto('/routines');
+  await page.goto('routines');
   await page.getByRole('button', { name: '반복 일정 삭제' }).click();
   const dialog = page.getByRole('dialog', { name: '반복 일정을 삭제할까요?' });
   await dialog.getByRole('checkbox', { name: /오늘 일정도 삭제 \(1개\)/ }).check();
   await expect(dialog.getByText(/오늘 1개 삭제/)).toBeVisible();
   await dialog.getByRole('button', { name: '반복 일정 삭제' }).click();
   await expect(page.getByText('아직 반복 일정이 없어요.')).toBeVisible();
-  await page.goto('/');
+  await page.goto('./');
   await expect(todoTitle(page, '물 마시기')).toHaveCount(0);
 });
 
 test('친구를 검색해 요청하고 취소한다', async ({ page }) => {
   await devLogin(page, unique('검색'));
-  await page.goto('/people');
+  await page.goto('people');
   await page.getByRole('searchbox').fill('민서');
   await page.getByRole('button', { name: '검색' }).click();
   await page.getByRole('button', { name: '친구 요청' }).click();
@@ -75,7 +75,7 @@ test('친구를 검색해 요청하고 취소한다', async ({ page }) => {
 test('크루를 만들면 칩에 생기고, 초대코드로 다른 사람이 참여하며, 방장은 혼자 남아야 삭제할 수 있다', async ({ page, browser }) => {
   await devLogin(page, unique('방장'));
   const name = unique('조');
-  await page.goto('/people?tab=crews');
+  await page.goto('people?tab=crews');
   await page.getByRole('button', { name: '크루 만들기' }).click();
   await page.getByRole('dialog').getByPlaceholder('크루 이름').fill(name);
   await page.getByRole('dialog').getByRole('button', { name: '만들기' }).click();
@@ -85,22 +85,22 @@ test('크루를 만들면 칩에 생기고, 초대코드로 다른 사람이 참
 
   const other = await browser.newPage();
   await devLogin(other, unique('조원'));
-  await other.goto('/people?tab=crews');
+  await other.goto('people?tab=crews');
   await other.getByRole('button', { name: '초대코드로 참여' }).click();
   await other.getByRole('dialog').getByPlaceholder('예: A1B2C3D4').fill(code);
   await other.getByRole('dialog').getByRole('button', { name: '참여' }).click();
   await expect(other.getByText(`${name} 크루에 참여했어요`)).toBeVisible();
-  await other.goto('/');
+  await other.goto('./');
   await other.getByRole('navigation', { name: '보드 고르기' }).getByRole('button', { name }).click();
   await expect(other.getByRole('button', { name: `초대코드 ${code}` })).toBeVisible();
   await expect(other.getByRole('region', { name: '프로필' }).getByText(name)).toBeVisible();
 
-  await page.goto('/people?tab=crews');
+  await page.goto('people?tab=crews');
   await row.getByRole('button', { name: '크루 삭제' }).click();
   await page.getByRole('dialog').getByRole('button', { name: '크루 삭제' }).click();
   await expect(page.getByText('크루원이 남아 있는 동안에는 방장이 나갈 수 없어요.')).toBeVisible();
 
-  await other.goto('/people?tab=crews');
+  await other.goto('people?tab=crews');
   await other.getByRole('listitem').filter({ hasText: name }).getByRole('button', { name: '나가기' }).click();
   await other.getByRole('dialog').getByRole('button', { name: '나가기' }).click();
   await expect(other.getByText('아직 참여한 크루가 없어요')).toBeVisible();
@@ -154,7 +154,7 @@ test('투두메이트에서 가져오면 카테고리와 할 일이 생긴다 (�
     });
   });
 
-  await page.goto('/import/todomate');
+  await page.goto('import/todomate');
   await page.getByLabel('투두메이트 이메일').fill('me@example.com');
   await page.getByLabel('비밀번호').fill('secret');
   await page.getByRole('button', { name: '다음' }).click();

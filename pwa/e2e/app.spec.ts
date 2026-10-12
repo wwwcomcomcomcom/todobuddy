@@ -125,12 +125,12 @@ test('친구 보드는 읽기 전용이다', async ({ page }) => {
 test('카테고리를 만들고 키보드로 순서를 바꾸면 메인에도 반영된다', async ({ page }) => {
   await devLogin(page, unique('정렬'));
   for (const name of ['첫째', '둘째']) {
-    await page.goto('/categories/new');
+    await page.goto('categories/new');
     await page.getByRole('textbox', { name: '카테고리 이름' }).fill(name);
     await page.getByRole('button', { name: '완료' }).click();
     await expect(page.getByRole('textbox', { name: '카테고리 이름' })).toHaveCount(0);
   }
-  await page.goto('/categories');
+  await page.goto('categories');
   const list = page.getByRole('list', { name: '카테고리 목록' });
   await expect(list.getByRole('listitem')).toHaveText([/첫째/, /둘째/]);
 
@@ -142,7 +142,7 @@ test('카테고리를 만들고 키보드로 순서를 바꾸면 메인에도 �
   }
   await expect(list.getByRole('listitem')).toHaveText([/둘째/, /첫째/]);
 
-  await page.goto('/');
+  await page.goto('./');
   await expect(page.getByRole('group')).toHaveText([/둘째/, /첫째/]);
 });
 
@@ -157,14 +157,15 @@ test('로그아웃하면 새로고침해도 로그인 화면이다', async ({ pa
 
 test('설치할 수 있는 PWA 이고, 오프라인이면 껍데기와 안내를 보여준다', async ({ page, context }) => {
   await devLogin(page);
-  const manifest = await page.request.get('/manifest.webmanifest');
+  const manifest = await page.request.get('manifest.webmanifest');
   expect(manifest.ok()).toBeTruthy();
   const json = await manifest.json();
-  expect(json).toMatchObject({ display: 'standalone', start_url: '/', name: 'Todo Buddy' });
+  expect(json).toMatchObject({ display: 'standalone', start_url: '/app/', scope: '/app/', name: 'Todo Buddy' });
   expect(json.icons.map((i: { purpose: string }) => i.purpose)).toContain('maskable');
 
-  // 서비스워커가 자리를 잡고 이 페이지를 맡을 때까지 기다린다.
-  await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+  // 서비스워커가 자리를 잡고 이 페이지를 맡을 때까지 기다린다. 범위는 /app/ 뿐이라 같은 호스트의 소개 사이트는 건드리지 않는다.
+  const swScope = await page.evaluate(() => navigator.serviceWorker.ready.then((r) => new URL(r.scope).pathname));
+  expect(swScope).toBe('/app/');
   await page.reload();
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 

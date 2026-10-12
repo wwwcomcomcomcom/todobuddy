@@ -15,7 +15,7 @@ npm test            # 서버 + 웹 앱 + 데스크탑 앱 (golden 제외)
 npm run test:server # node --test
 npm run test:pwa    # vitest (pwa 단위·컴포넌트)
 npm run e2e:pwa     # playwright (실제 서버 + 빌드한 pwa, @visual 제외)
-npm run pwa         # 웹 앱 개발 서버 (localhost:5173, /api → 127.0.0.1:4000)
+npm run pwa         # 웹 앱 개발 서버 (localhost:5173/app/, /api → 127.0.0.1:4000)
 npm run pwa:build   # pwa/dist
 npm run test:app    # flutter test --exclude-tags golden
 npm run test:golden # 골든만. 실패하면 --update-goldens 전에 렌더 결과를 눈으로 확인할 것
@@ -59,7 +59,7 @@ npm run web:build   # 소개 사이트 정적 빌드
   헬스체크가 실패하면 이전 커밋으로 되돌린다 (웹 앱은 바꾸지 않는다). 웹 앱 빌드가 깨지면 서버를 재시작하기 전에 멈춘다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
 - 운영 서버의 Node 는 nvm 경로(`~/.nvm/versions/node/v24.21.0`)를 직접 가리킨다. Node 를 올리면 유닛과 배포 스크립트의 경로를 같이 바꿀 것.
 - 웹(`web/`, 3000 포트)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다.
-- 웹 앱(`pwa/dist`)은 리버스 프록시가 정적으로 서빙한다 (`/api/` → 서버, 접두어 제거). 예시 `server/deploy/nginx-todobuddy-pwa.conf`. 이것도 저장소에서 고쳐도 자동 반영되지 않는다.
+- 웹 앱(`pwa/dist`)은 소개 사이트와 같은 호스트(`todobuddy.https.gsmsv.site`)의 `/app/` 에서 리버스 프록시가 정적으로 서빙한다 (`/` → 소개 사이트, `/api/` → 서버 접두어 제거, `/uploads/` → 서버). 예시 `server/deploy/nginx-todobuddy-pwa.conf`. 이것도 저장소에서 고쳐도 자동 반영되지 않는다.
 - `.github/workflows/pwa-ci.yml` 은 `pull_request` 트리거가 있으므로 **GitHub 호스팅 러너만** 쓴다. 운영 러너를 붙이지 말 것.
 
 ## 도메인 불변식
@@ -94,6 +94,9 @@ npm run web:build   # 소개 사이트 정적 빌드
 - Vite + React + TypeScript SPA. Tailwind v4, 토큰은 `src/styles.css` 의 `@theme`. 색은 `theme.dart`·`web/` 과 같은 팔레트다 — 셋 중 하나를 바꾸면 나머지도 맞출 것.
 - 상태는 `src/state/store.ts` 의 `AppStore` 하나뿐이다 (Flutter `AppState` 를 옮긴 것). 화면은 `useApp()`·`useStore()` 로만 상태를 다룬다. 쓰기는 `guard()` 로 감싸 보드를 다시 읽는다.
 - 서버와는 `src/lib/api.ts` 의 `Api` 만 통한다. 항상 같은 출처 `/api` + 쿠키다. 토큰을 스크립트에 두지 말 것.
+- 웹 앱은 **`/app/` 아래**에서 돈다 (`vite.config.ts` 의 `BASE`). API·업로드는 그 밖의 호스트 루트(`/api`, `/uploads`)다.
+  화면 경로는 라우터 `basename` 이 붙여 주므로 `navigate('/people')` 처럼 쓰고, 정적 파일 주소는 `import.meta.env.BASE_URL` 로 만든다.
+  `BASE` 를 바꾸면 서버의 `TODOBUDDY_WEB_PATH` 와 nginx 예시도 같이 바꿀 것. e2e 의 `goto` 는 상대 경로(`'people'`, `'./'`)로 쓴다.
 - 의존성은 `docs/pwa-migration-plan.md` 의 "결정 사항" 표에 있는 것만 쓴다. 추가하면 그 문서에 이유를 남긴다. 아이콘은 `components/Icon.tsx` 에 경로만 옮겨 적는다.
 - **Enter 로 제출하는 입력은 `lib/keys.ts` 의 `isSubmitEnter` 를 거친다.** 한글 IME 조합 중 Enter(isComposing / keyCode 229)를 제출로 받으면 글자가 남거나 사라진다.
 - 다이얼로그는 `openDialog()`/`confirmDialog()`/`promptDialog()` 로 띄우고, 입력 상태는 **다이얼로그 내용 컴포넌트가 소유**한다 (Flutter 의 TextEditingController 규칙과 같은 이유).

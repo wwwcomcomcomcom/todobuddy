@@ -181,15 +181,24 @@ export const googleConfig = {
   },
 };
 
+const webPathSegment = String(process.env.TODOBUDDY_WEB_PATH ?? '/app/').replace(/^\/+|\/+$/g, '');
+const webPath = webPathSegment ? `/${webPathSegment}/` : '/';
+
 /**
  * PWA 용 "웹 애플리케이션" 유형 OAuth 클라이언트. 서버가 리다이렉트를 주도한다.
  * 구글이 돌려보낼 주소는 PWA 출처의 `/api/auth/google/callback` 이다 (프록시가 `/api` 를 뗀다).
+ * API 는 호스트 루트에 있고, PWA 화면만 `appPath`(기본 `/app/`) 아래에 있다.
  */
 export const googleWebConfig = {
   clientId: process.env.GOOGLE_WEB_CLIENT_ID ?? '',
   clientSecret: process.env.GOOGLE_WEB_CLIENT_SECRET ?? '',
-  /** 로그인을 마치고 돌아갈 PWA 주소 */
+  /** 로그인을 마치고 돌아갈 PWA 출처 */
   appOrigin: webOrigins[0] ?? '',
+  /** PWA 가 떠 있는 경로 (Vite `base` 와 같아야 한다). 앞뒤 `/` 를 붙여 둔다. */
+  appPath: webPath,
+  get appUrl() {
+    return `${this.appOrigin}${this.appPath}`;
+  },
   get redirectUri() {
     return process.env.GOOGLE_WEB_REDIRECT_URI || `${this.appOrigin}/api/auth/google/callback`;
   },

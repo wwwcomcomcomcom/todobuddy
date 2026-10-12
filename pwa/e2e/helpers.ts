@@ -4,7 +4,7 @@ export const isMobile = (page: Page) => (page.viewportSize()?.width ?? 1000) < 7
 
 /** 개발용 로그인. 이름이 같으면 같은 계정이다 (시드 계정은 '하루'). */
 export async function devLogin(page: Page, name = '하루') {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: '이름만으로 시작하기 (개발용)' }).click();
   const dialog = page.getByRole('dialog', { name: '개발용 로그인' });
   await dialog.getByPlaceholder('사용할 이름').fill(name);

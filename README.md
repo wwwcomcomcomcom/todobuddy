@@ -47,7 +47,7 @@ cd app && flutter run -d macos     # 또는 -d windows
 웹 앱은 서버를 띄운 채로:
 
 ```bash
-npm run pwa                        # http://localhost:5173  (/api 를 127.0.0.1:4000 으로 프록시)
+npm run pwa                        # http://localhost:5173/app/  (/api 를 127.0.0.1:4000 으로 프록시)
 ```
 
 개발용 로그인은 이름만으로 계정을 만드는 통로라 **기본은 꺼져 있습니다**.
@@ -99,15 +99,17 @@ macOS 는 App Transport Security 때문에 `https` 가 아니면 요청이 막�
 서명·스토어 없이 HTTPS 주소 하나로 데스크탑·모바일에 설치됩니다.
 
 ```bash
-npm run pwa            # 개발 서버 (localhost:5173)
+npm run pwa            # 개발 서버 (localhost:5173/app/)
 npm run pwa:build      # pwa/dist 정적 빌드 (서비스워커·매니페스트 포함)
-npm run pwa:preview    # 빌드 결과를 localhost:4173 에서 (같은 /api 프록시)
+npm run pwa:preview    # 빌드 결과를 localhost:4173/app/ 에서 (같은 /api 프록시)
 npm run test:pwa       # Vitest 단위·컴포넌트 테스트
 npm run e2e:pwa        # Playwright e2e (실제 서버 + 빌드한 앱, 데스크탑·모바일 뷰포트)
 npm --workspace pwa run e2e:visual   # 스크린샷 비교. 실패하면 갱신 전에 눈으로 확인할 것
 ```
 
-- **PWA 와 API 는 같은 출처**에서 서빙합니다. API 는 `/api` 아래에 두고 프록시가 접두어를 떼어 서버로 넘깁니다.
+- **소개 사이트·PWA·API 는 한 호스트**(`todobuddy.https.gsmsv.site`)에서 서빙합니다.
+  `/` 는 소개 사이트, `/app/` 은 PWA, `/api` 는 API(프록시가 접두어를 떼어 서버로 넘김), `/uploads` 는 프로필 사진입니다.
+  PWA 경로는 `pwa/vite.config.ts` 의 `BASE` 와 서버 `.env` 의 `TODOBUDDY_WEB_PATH` 가 같아야 합니다.
   운영 예시는 [`server/deploy/nginx-todobuddy-pwa.conf`](server/deploy/nginx-todobuddy-pwa.conf).
 - 인증은 서버가 심는 httpOnly 쿠키(`tb_session`)입니다. 스크립트는 토큰을 볼 수 없습니다.
 - 서비스워커는 해시된 자산만 미리 받아 두고, 새 버전이 나오면 "새 버전이 있어요" 안내만 띄웁니다 (자동 새로고침 없음).
@@ -137,7 +139,7 @@ cp server/.env.example server/.env   # GOOGLE_CLIENT_ID / SECRET 채우기
 
 1. 로그인 버튼이 `/api/auth/google/start` 로 이동한다. 서버가 state·code_verifier 를 10분짜리 서명 쿠키에 담고 구글로 보낸다
 2. 구글이 `/api/auth/google/callback` 으로 돌려보내면 서버가 state 를 확인하고 토큰을 교환한다
-3. 서버가 세션 쿠키를 심고 PWA 로 돌려보낸다
+3. 서버가 세션 쿠키를 심고 PWA(`<TODOBUDDY_WEB_ORIGIN><TODOBUDDY_WEB_PATH>`, 기본 `/app/`)로 돌려보낸다
 
 ## 도메인 정리
 

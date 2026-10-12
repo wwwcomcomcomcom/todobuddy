@@ -122,7 +122,7 @@ Flutter 코드 약 6,000줄. 의존성은 `http`, `provider`, `shared_preference
   Vitest 가 두 플래그를, e2e 가 CDP(`Input.imeSetComposition`)로 실제 조합 이벤트를 흉내 내 "조합 중 Enter 는 저장하지 않고, 확정 뒤 Enter 는 한 번만 그대로 저장" 을 확인한다.
   macOS Safari 의 두벌식·iOS 키보드·Android Gboard 는 실기기로 한 번 더 볼 것.
 - **iOS·Android standalone 구글 로그인 — 미확인.** 지금 흐름은 같은 창의 최상위 이동이다:
-  `/api/auth/google/start`(302) → 구글 → `/api/auth/google/callback` 이 세션 쿠키를 심고 `/` 로 302.
+  `/api/auth/google/start`(302) → 구글 → `/api/auth/google/callback` 이 세션 쿠키를 심고 `/app/` 로 302.
   standalone 앱에서 범위 밖(accounts.google.com)으로 나가면 앱 안의 브라우저 시트로 열리고, 범위 안으로 돌아오면 앱으로 복귀하는 것이 기대 동작이다.
   쿠키는 콜백 응답이 앱의 출처에 심으므로 앱의 쿠키 저장소에 남아야 한다.
   **막힐 때의 대안**: 로그인 버튼이 `window.open('/api/auth/google/start')` 로 새 창을 열고, 앱은 `visibilitychange`·`focus` 때 `/api/auth/me` 를 다시 불러 세션을 이어받는다
@@ -190,8 +190,8 @@ Flutter 코드 약 6,000줄. 의존성은 `http`, `provider`, `shared_preference
 - [x] 새 버전 감지 → "새 버전이 있어요, 새로고침" 토스트 (자동 강제 새로고침 금지 — 입력 중 날아감)
 - [x] 설치 안내: Chromium 은 `beforeinstallprompt`, iOS 는 공유 → 홈 화면에 추가 안내
 - [ ] 운영 배포 — **저장소 쪽은 끝, 운영 서버 작업이 남았다**
-  - [ ] 리버스 프록시: `/` → `pwa/dist` 정적, `/api/` → `127.0.0.1:4000` (접두어 제거), `/uploads/` 도 서버로
-    — 예시는 `server/deploy/nginx-todobuddy-pwa.conf`. 서버 `.env` 에 `TODOBUDDY_WEB_ORIGIN`·`GOOGLE_WEB_CLIENT_*` 도 넣을 것
+  - [ ] 리버스 프록시: `/` → 소개 사이트(3000), `/app/` → `pwa/dist` 정적, `/api/` → `127.0.0.1:4000` (접두어 제거), `/uploads/` 도 서버로
+    — 예시는 `server/deploy/nginx-todobuddy-pwa.conf`. 서버 `.env` 에 `TODOBUDDY_WEB_ORIGIN`·`TODOBUDDY_WEB_PATH`·`GOOGLE_WEB_CLIENT_*` 도 넣을 것
   - [x] `server/deploy/todobuddy-deploy.sh` 에 `npm ci` + `npm run pwa:build` 추가.
     **운영 서버 사본은 root 소유라 직접 다시 깔아야 한다.**
     - `npm ci` 대신 기존 `install_deps`(npm install) 를 쓴다 — 같은 체크아웃의 node_modules 로 `web` 이 돌고 있어서 지우면 안 된다.
@@ -264,9 +264,12 @@ PWA 열의 ✅ 는 실제 서버를 띄운 e2e(`pwa/e2e/*.spec.ts`, 데스크탑
 
 ## 열린 질문
 
-- [ ] PWA 주소: 소개 사이트와 같은 호스트의 하위 경로인가, `app.` 같은 별도 호스트인가. (같은 출처 프록시만 지키면 어느 쪽이든 된다)
-  - 지금 구현은 **호스트의 루트**를 가정한다 (매니페스트 `start_url`·`scope` = `/`, API 는 `/api`, 구글 콜백은 `/api/auth/google/callback`).
-    하위 경로로 가려면 Vite `base`, 매니페스트, 서버의 콜백·돌아갈 주소를 함께 바꿔야 해서 별도 호스트(`app.`)가 간단하다.
+- [x] PWA 주소: 소개 사이트와 **같은 호스트의 하위 경로 `/app/`** (`https://todobuddy.https.gsmsv.site/app/`).
+  - 화면만 `/app/` 아래로 옮기고 API(`/api`)·업로드(`/uploads`)는 호스트 루트에 그대로 둔다.
+    저장된 프로필 사진 주소(`/uploads/...`), 구글 콜백(`/api/auth/google/callback`), 데스크탑 앱의 서버 주소가 바뀌지 않는다.
+  - 바뀐 곳: Vite `base`·매니페스트 `id`/`start_url`/`scope` = `/app/`, 라우터 `basename`, 서버가 로그인 뒤 돌려보낼 경로(`TODOBUDDY_WEB_PATH`), nginx 예시.
+    서비스워커 범위가 `/app/` 이라 같은 호스트의 소개 사이트에는 끼어들지 않는다 (e2e 가 확인).
+  - 소개 사이트와 같은 출처가 되므로 랜딩에서 `/app/` 로 바로 링크할 수 있다. 설치 자체는 여전히 `/app/` 안(설정 화면·메뉴)에서만 된다.
 - [x] 터치에서 할 일 삭제·수정 제스처 → 탭으로 수정, 수정창 안의 삭제 버튼 (Phase 3 참고)
 - [ ] 데스크탑 클라이언트 지원 종료 시점과 구버전용 서버 경로 정리 시점
 - [ ] `theme.dart` · `web/` · `pwa/` 세 곳 팔레트를 어떻게 맞출지 (Flutter 삭제 후엔 `web/` · `pwa/` 두 곳 — 공유 CSS 파일로 뺄지)

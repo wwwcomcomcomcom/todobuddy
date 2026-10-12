@@ -22,7 +22,7 @@ export function App({ store, initialPath, extra }: { store: AppStore; initialPat
   const routes = <Root />;
   return (
     <StoreProvider store={store}>
-      {initialPath ? <MemoryRouter initialEntries={[initialPath]}>{routes}</MemoryRouter> : <BrowserRouter>{routes}</BrowserRouter>}
+      {initialPath ? <MemoryRouter initialEntries={[initialPath]}>{routes}</MemoryRouter> : <BrowserRouter basename={import.meta.env.BASE_URL}>{routes}</BrowserRouter>}
       <DialogHost />
       <ToastHost />
       {extra}

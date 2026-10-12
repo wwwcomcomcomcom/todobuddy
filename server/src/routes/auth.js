@@ -73,7 +73,7 @@ const sameString = (a, b) => {
 /** 구글이 돌려보내는 곳. state 를 확인하고 세션 쿠키를 심은 뒤 PWA 로 돌려보낸다. */
 router.get('/google/callback', async (req, res) => {
   if (!googleWebConfig.enabled) return res.status(503).json({ error: 'google_oauth_not_configured' });
-  const back = (error) => res.redirect(302, `${googleWebConfig.appOrigin}/${error ? `login?error=${error}` : ''}`);
+  const back = (error) => res.redirect(302, `${googleWebConfig.appUrl}${error ? `login?error=${error}` : ''}`);
 
   const saved = verifyToken(parseCookies(req.headers.cookie)[OAUTH_COOKIE]);
   clearCookie(res, OAUTH_COOKIE);

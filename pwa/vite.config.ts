@@ -5,7 +5,11 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// 운영과 같은 모양으로 붙인다: PWA 와 API 가 같은 출처, API 는 /api 아래.
+// 웹 앱은 소개 사이트(web/)와 같은 호스트의 하위 경로에서 돈다. 바꾸면 서버의 TODOBUDDY_WEB_PATH 와
+// 리버스 프록시(server/deploy/nginx-todobuddy-pwa.conf)도 같이 바꿀 것. 화면 쪽은 import.meta.env.BASE_URL 로 읽는다.
+const BASE = '/app/';
+
+// 운영과 같은 모양으로 붙인다: PWA 와 API 가 같은 출처, API 는 호스트 루트의 /api 아래 (/app 밖).
 // changeOrigin 을 끄면 Host 가 그대로 넘어가 서버의 같은 출처 검사(CSRF)를 통과한다.
 const API = process.env.TODOBUDDY_API_PROXY ?? 'http://127.0.0.1:4000';
 const proxy: Record<string, ProxyOptions> = {
@@ -18,6 +22,7 @@ const version =
   process.env.TODOBUDDY_APP_VERSION || JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 export default defineConfig({
+  base: BASE,
   define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [
     react(),
@@ -26,21 +31,21 @@ export default defineConfig({
       registerType: 'prompt',
       injectRegister: false,
       manifest: {
-        id: '/',
+        id: BASE,
         name: 'Todo Buddy',
         short_name: 'Todo Buddy',
         description: '친구·크루와 하루치 할 일을 나눠 보는 TODO 앱',
         lang: 'ko',
-        start_url: '/',
-        scope: '/',
+        start_url: BASE,
+        scope: BASE,
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#ffffff',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-          { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: `${BASE}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: `${BASE}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: `${BASE}icon-maskable-192.png`, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: `${BASE}icon-maskable-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
@@ -51,13 +56,15 @@ export default defineConfig({
         runtimeCaching: [
           {
             // 화면 이동(SPA 경로)은 늘 새 index.html 을 먼저 받고, 오프라인일 때만 마지막으로 받은 것을 쓴다.
-            // 경로가 달라도 같은 index.html 이므로 캐시 키를 하나로 모은다. /api·/uploads 는 캐시하지 않는다.
+            // 경로가 달라도 같은 index.html 이므로 캐시 키를 하나로 모은다. /api·/uploads 는 캐시하지 않는다
+            // (서비스워커 범위가 /app/ 라 닿지도 않지만, 범위를 넓힐 때를 대비해 남겨 둔다).
             urlPattern: ({ request, url }) =>
               request.mode === 'navigate' && !url.pathname.startsWith('/api/') && !url.pathname.startsWith('/uploads/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'todobuddy-shell',
               networkTimeoutSeconds: 4,
+              // 이 함수는 문자열로 sw.js 에 옮겨지므로 바깥 변수(BASE 등)를 쓰면 안 된다. 키는 이름일 뿐이다.
               plugins: [{ cacheKeyWillBeUsed: async () => '/index.html' }],
             },
           },
