@@ -55,13 +55,15 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 러너 계정이 할 수 있는 건 `/usr/local/bin/todobuddy-deploy <태그>` 를 `ubuntu` 로 실행하는 것뿐이다.
   원본은 `server/deploy/todobuddy-deploy.sh` 지만 운영 서버의 사본은 root 소유라 **저장소에서 고쳐도 자동 반영되지 않는다.** 고쳤으면 직접 다시 깔 것.
   systemd 유닛(`server/deploy/todobuddy-server.service`)도 마찬가지다.
-- 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → 웹 앱 빌드(`pwa/dist.next`) → `systemctl restart todobuddy-server` → `/health` 확인 → `pwa/dist` 교체 순이고,
+- 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → 웹 앱 빌드(`pwa/dist.next`)·소개 사이트 빌드(`web/.next.build`) → `systemctl restart todobuddy-server` → `/health` 확인 → `pwa/dist` 교체 → `web/.next` 교체·`todobuddy-web` 재시작 순이고,
   헬스체크가 실패하면 이전 커밋으로 되돌린다 (웹 앱은 바꾸지 않는다). 웹 앱 빌드가 깨지면 서버를 재시작하기 전에 멈춘다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
 - 운영 서버의 Node 는 nvm 경로(`~/.nvm/versions/node/v24.21.0`)를 직접 가리킨다. Node 를 올리면 유닛과 배포 스크립트의 경로를 같이 바꿀 것.
 - 운영 트래픽 경로: gsmsv 게이트웨이(Caddy, TLS 종료) → VM `3000` 의 nginx → 경로별로 나눈다. 게이트웨이는 서브도메인을 VM 포트 하나에 통째로 넘길 뿐 경로 설정을 못 하므로, 경로 분기는 VM 의 nginx 가 맡는다.
   `/` → 소개 사이트(`127.0.0.1:3001`), `/app/` → `pwa/dist` 정적, `/api/` → 서버(`.env` 의 `PORT`, 운영은 10000, 접두어 제거), `/uploads/` → 서버.
   설정 원본은 `server/deploy/nginx-todobuddy-pwa.conf`, 운영 사본은 `/etc/nginx/sites-available/todobuddy` 다. **저장소에서 고쳐도 자동 반영되지 않는다.** 고쳤으면 `sudo install -m644 ... && sudo nginx -t && sudo systemctl reload nginx`.
-- 웹(`web/`)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다. 3000 은 nginx 자리이므로 **`npm --workspace web run start:prod`(127.0.0.1:3001)** 로 띄울 것. 재부팅하면 직접 다시 띄워야 한다 (nginx 는 자동으로 뜬다).
+- 소개 사이트(`web/`)는 systemd `todobuddy-web`(127.0.0.1:3001, 원본 `server/deploy/todobuddy-web.service`)로 돈다. 3000 은 nginx 자리다.
+  배포 스크립트가 `web/`·의존성이 바뀐 태그에서만 `web/.next.build` 에 빌드(`TODOBUDDY_NEXT_DIST_DIR`)해 두고, 서버 헬스체크 뒤 `.next` 와 바꿔 끼워 재시작한다. 소개 사이트가 안 뜨면 소개 사이트만 이전 빌드로 되돌린다.
+  `web/next.config.ts` 의 `distDir` 환경변수를 없애면 배포가 돌고 있는 `.next` 를 덮어쓰게 되므로 지우지 말 것. `web/tsconfig.json` 의 `.next.build/...` 항목도 지우지 말 것 — 없으면 빌드가 추가해 운영 체크아웃이 더러워지고 다음 배포가 멈춘다.
 - `.github/workflows/pwa-ci.yml` 은 `pull_request` 트리거가 있으므로 **GitHub 호스팅 러너만** 쓴다. 운영 러너를 붙이지 말 것.
 
 ## 도메인 불변식

@@ -230,12 +230,12 @@ SQLite 파일은 `server/data/todobuddy.db`, 업로드한 프로필 사진은 `s
 
 `v` 로 시작하는 태그를 올리면 앱 릴리스와 함께 운영 서버와 웹 앱도 같은 버전으로 배포됩니다.
 GitHub 호스팅 러너에서 서버 테스트와 웹 앱 빌드가 통과하면, 운영 서버에 붙은 self-hosted 러너가
-DB 스냅샷 → 태그 체크아웃 → 웹 앱 빌드(`pwa/dist.next`) → 재시작 → 헬스체크 → 웹 앱 교체 순으로 배포하고,
+DB 스냅샷 → 태그 체크아웃 → 웹 앱·소개 사이트 빌드 → 재시작 → 헬스체크 → 웹 앱·소개 사이트 교체 순으로 배포하고,
 실패하면 이전 버전으로 되돌립니다 (웹 앱은 헬스체크를 통과할 때만 바뀝니다).
 서버만 다시 배포하려면 Actions 탭의 **서버 배포** 워크플로를 태그를 골라 수동 실행합니다.
 
 운영 서버에 깔린 배포 스크립트와 systemd 유닛, nginx 설정의 원본은 `server/deploy/` 에 있습니다.
-소개 사이트(`web/`)는 이 배포 밖이라 운영 서버의 tmux 세션 `web` 에서 `npm --workspace web run start:prod` 로 띄웁니다.
+소개 사이트(`web/`)는 systemd 서비스 `todobuddy-web` 으로 돌고, `web/` 이 바뀐 태그에서만 다시 빌드·재시작됩니다.
 
 PR 과 master 에는 `.github/workflows/pwa-ci.yml` 이 서버 테스트·웹 앱 단위 테스트·빌드·e2e 를 돌립니다 (GitHub 호스팅 러너).
 

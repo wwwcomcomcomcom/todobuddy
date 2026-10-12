@@ -4,6 +4,8 @@ server/uploads/
 .env
 
 web/.next/
+web/.next.build/
+web/.next.prev/
 web/out/
 web/next-env.d.ts
 web/tsconfig.tsbuildinfo

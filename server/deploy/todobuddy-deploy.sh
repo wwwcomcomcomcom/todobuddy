@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 운영 서버 배포. self-hosted 러너(github-runner 계정)가 `sudo -H -u ubuntu` 로 부른다.
-# 서버(systemd)와 웹 앱(pwa/dist, 리버스 프록시가 정적으로 서빙)을 같은 태그로 바꾼다.
+# 서버(systemd)·웹 앱(pwa/dist, nginx 가 정적으로 서빙)·소개 사이트(web/, systemd)를 같은 태그로 바꾼다.
 #
 #   todobuddy-deploy v0.3.0
 #
@@ -15,6 +15,9 @@ BACKUP_DIR=/home/ubuntu/todobuddy-backups
 KEEP_BACKUPS=30
 SERVICE=todobuddy-server
 PWA_DIR="$REPO_DIR/pwa"
+WEB_DIR="$REPO_DIR/web"
+WEB_SERVICE=todobuddy-web
+WEB_URL=http://127.0.0.1:3001/
 NODE_BIN=/home/ubuntu/.nvm/versions/node/v24.21.0/bin
 
 export HOME=/home/ubuntu
@@ -65,10 +68,10 @@ if [[ -f "$DB" ]]; then
 fi
 
 deps_changed() {
-  ! git diff --quiet "$1" "$2" -- package-lock.json package.json server/package.json pwa/package.json
+  ! git diff --quiet "$1" "$2" -- package-lock.json package.json server/package.json pwa/package.json web/package.json
 }
 
-# web 이 같은 체크아웃의 node_modules 를 쓰며 돌고 있으므로 npm ci (전부 지우고 새로 깔기) 는 쓰지 않는다.
+# 소개 사이트가 같은 체크아웃의 node_modules 를 쓰며 돌고 있으므로 npm ci (전부 지우고 새로 깔기) 는 쓰지 않는다.
 install_deps() {
   npm install --no-audit --no-fund
   git checkout -q -- package-lock.json
@@ -90,6 +93,56 @@ swap_in_pwa() {
   echo "== 웹 앱 교체: $PWA_DIR/dist"
 }
 
+# 소개 사이트도 .next.build 에 따로 빌드해 두고, 서버가 건강할 때만 .next 와 바꿔 끼운 뒤 재시작한다.
+# web/ 이나 의존성이 바뀐 태그에서만 빌드한다 (재시작하면 소개 사이트가 잠깐 끊긴다).
+# distDir 을 바꿀 수 없는 예전 태그는 돌고 있는 .next 를 덮어쓰게 되므로 건너뛴다.
+web_changed() {
+  [[ "$1" != "$2" ]] && ! git diff --quiet "$1" "$2" -- web package-lock.json package.json
+}
+
+build_web() {
+  [[ -f "$WEB_DIR/package.json" ]] || return 0
+  if ! grep -q TODOBUDDY_NEXT_DIST_DIR "$WEB_DIR/next.config.ts" 2>/dev/null; then
+    echo "== 소개 사이트: 이 태그는 따로 빌드할 수 없어 건너뜀"
+    return 0
+  fi
+  if ! web_changed "$PREV" "$NEXT" && [[ -d "$WEB_DIR/.next" ]]; then
+    echo "== 소개 사이트: 바뀐 것이 없어 건너뜀"
+    return 0
+  fi
+  rm -rf "$WEB_DIR/.next.build"
+  (cd "$WEB_DIR" && TODOBUDDY_NEXT_DIST_DIR=.next.build npx next build >/dev/null)
+}
+
+web_healthy() {
+  for _ in $(seq 1 30); do
+    curl -fsS -m 2 -o /dev/null "$WEB_URL" 2>/dev/null && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+# 서버는 이미 새 버전이므로 소개 사이트가 안 뜨면 소개 사이트만 이전 빌드로 되돌린다.
+swap_in_web() {
+  [[ -d "$WEB_DIR/.next.build" ]] || return 0
+  rm -rf "$WEB_DIR/.next.prev"
+  if [[ -d "$WEB_DIR/.next" ]]; then mv "$WEB_DIR/.next" "$WEB_DIR/.next.prev"; fi
+  mv "$WEB_DIR/.next.build" "$WEB_DIR/.next"
+  sudo -n systemctl restart "$WEB_SERVICE"
+  if web_healthy; then
+    echo "== 소개 사이트 교체: $WEB_DIR/.next"
+    return 0
+  fi
+  echo "== 소개 사이트가 뜨지 않는다. 이전 빌드로 되돌린다" >&2
+  sudo -n journalctl -u "$WEB_SERVICE" -n 40 --no-pager >&2 || true
+  if [[ -d "$WEB_DIR/.next.prev" ]]; then
+    rm -rf "$WEB_DIR/.next"
+    mv "$WEB_DIR/.next.prev" "$WEB_DIR/.next"
+    sudo -n systemctl restart "$WEB_SERVICE"
+  fi
+  return 1
+}
+
 healthy() {
   for _ in $(seq 1 30); do
     curl -fsS -m 2 "$HEALTH_URL" >/dev/null 2>&1 && return 0
@@ -104,10 +157,10 @@ if deps_changed "$PREV" "$NEXT"; then
   install_deps
 fi
 
-# 웹 앱 빌드가 깨지면 서버를 건드리기 전에 멈추고 원래대로 돌려 둔다.
-if ! build_pwa; then
-  echo "== 웹 앱 빌드 실패. ${PREV:0:7} 로 되돌리고 멈춘다 (서버는 재시작하지 않았다)" >&2
-  rm -rf "$PWA_DIR/dist.next"
+# 웹 앱·소개 사이트 빌드가 깨지면 서버를 건드리기 전에 멈추고 원래대로 돌려 둔다.
+if ! build_pwa || ! build_web; then
+  echo "== 웹 앱 또는 소개 사이트 빌드 실패. ${PREV:0:7} 로 되돌리고 멈춘다 (서버는 재시작하지 않았다)" >&2
+  rm -rf "$PWA_DIR/dist.next" "$WEB_DIR/.next.build"
   git checkout -q --detach "$PREV"
   if deps_changed "$PREV" "$NEXT"; then
     install_deps
@@ -118,12 +171,16 @@ fi
 sudo -n systemctl restart "$SERVICE"
 if healthy; then
   swap_in_pwa
+  if ! swap_in_web; then
+    echo "== 서버·웹 앱은 $TAG 로 바뀌었지만 소개 사이트는 이전 빌드다. 직접 확인할 것: journalctl -u $WEB_SERVICE" >&2
+    exit 1
+  fi
   echo "== 배포 완료: $TAG (${NEXT:0:7})"
   exit 0
 fi
 
-# 서버가 안 뜨면 웹 앱도 바꾸지 않는다 (dist 는 이전 버전 그대로다).
-rm -rf "$PWA_DIR/dist.next"
+# 서버가 안 뜨면 웹 앱·소개 사이트도 바꾸지 않는다 (이전 빌드 그대로다).
+rm -rf "$PWA_DIR/dist.next" "$WEB_DIR/.next.build"
 
 echo "== 헬스체크 실패. ${PREV:0:7} 로 되돌린다" >&2
 sudo -n journalctl -u "$SERVICE" -n 40 --no-pager >&2 || true

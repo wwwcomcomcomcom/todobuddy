@@ -42,7 +42,7 @@ jobs:
       - name: 의존성 설치
         run: |
           if [ -f pwa/package.json ]; then
-            npm ci --workspace server --workspace pwa --include-workspace-root
+            npm ci --workspace server --workspace pwa --workspace web --include-workspace-root
           else
             npm ci --workspace server
           fi
@@ -54,6 +54,11 @@ jobs:
       - name: 웹 앱 테스트 · 빌드
         if: hashFiles('pwa/package.json') != ''
         run: npm run test:pwa && npm run pwa:build
+
+      # 소개 사이트도 운영 서버가 같은 태그로 다시 빌드한다 (web/ 이 바뀐 태그만).
+      - name: 소개 사이트 빌드
+        if: hashFiles('pwa/package.json') != ''
+        run: npm run web:build
 
   deploy:
     name: 운영 배포
