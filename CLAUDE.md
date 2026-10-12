@@ -58,8 +58,10 @@ npm run web:build   # 소개 사이트 정적 빌드
 - 배포 스크립트는 DB 스냅샷(`~/todobuddy-backups/`, 최근 30개) → 태그 체크아웃(detached) → 웹 앱 빌드(`pwa/dist.next`) → `systemctl restart todobuddy-server` → `/health` 확인 → `pwa/dist` 교체 순이고,
   헬스체크가 실패하면 이전 커밋으로 되돌린다 (웹 앱은 바꾸지 않는다). 웹 앱 빌드가 깨지면 서버를 재시작하기 전에 멈춘다. DB 는 되돌리지 않으므로 **마이그레이션은 추가만** 하는 방식을 유지할 것 (이전 코드가 새 스키마에서도 돌아야 롤백이 된다).
 - 운영 서버의 Node 는 nvm 경로(`~/.nvm/versions/node/v24.21.0`)를 직접 가리킨다. Node 를 올리면 유닛과 배포 스크립트의 경로를 같이 바꿀 것.
-- 웹(`web/`, 3000 포트)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다.
-- 웹 앱(`pwa/dist`)은 소개 사이트와 같은 호스트(`todobuddy.https.gsmsv.site`)의 `/app/` 에서 리버스 프록시가 정적으로 서빙한다 (`/` → 소개 사이트, `/api/` → 서버 접두어 제거, `/uploads/` → 서버). 예시 `server/deploy/nginx-todobuddy-pwa.conf`. 이것도 저장소에서 고쳐도 자동 반영되지 않는다.
+- 운영 트래픽 경로: gsmsv 게이트웨이(Caddy, TLS 종료) → VM `3000` 의 nginx → 경로별로 나눈다. 게이트웨이는 서브도메인을 VM 포트 하나에 통째로 넘길 뿐 경로 설정을 못 하므로, 경로 분기는 VM 의 nginx 가 맡는다.
+  `/` → 소개 사이트(`127.0.0.1:3001`), `/app/` → `pwa/dist` 정적, `/api/` → 서버(`.env` 의 `PORT`, 운영은 10000, 접두어 제거), `/uploads/` → 서버.
+  설정 원본은 `server/deploy/nginx-todobuddy-pwa.conf`, 운영 사본은 `/etc/nginx/sites-available/todobuddy` 다. **저장소에서 고쳐도 자동 반영되지 않는다.** 고쳤으면 `sudo install -m644 ... && sudo nginx -t && sudo systemctl reload nginx`.
+- 웹(`web/`)은 아직 이 파이프라인 밖이다. tmux 세션 `web` 에서 수동으로 돈다. 3000 은 nginx 자리이므로 **`npm --workspace web run start:prod`(127.0.0.1:3001)** 로 띄울 것. 재부팅하면 직접 다시 띄워야 한다 (nginx 는 자동으로 뜬다).
 - `.github/workflows/pwa-ci.yml` 은 `pull_request` 트리거가 있으므로 **GitHub 호스팅 러너만** 쓴다. 운영 러너를 붙이지 말 것.
 
 ## 도메인 불변식

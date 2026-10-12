@@ -189,15 +189,16 @@ Flutter 코드 약 6,000줄. 의존성은 `http`, `provider`, `shared_preference
   - 해시된 자산·아이콘만 프리캐시하고, 화면 이동(`index.html`)은 네트워크 우선(4초) → 오프라인이면 마지막으로 받은 것. 어느 경로든 같은 캐시 키 하나를 쓴다.
 - [x] 새 버전 감지 → "새 버전이 있어요, 새로고침" 토스트 (자동 강제 새로고침 금지 — 입력 중 날아감)
 - [x] 설치 안내: Chromium 은 `beforeinstallprompt`, iOS 는 공유 → 홈 화면에 추가 안내
-- [ ] 운영 배포 — **저장소 쪽은 끝, 운영 서버 작업이 남았다**
-  - [ ] 리버스 프록시: `/` → 소개 사이트(3000), `/app/` → `pwa/dist` 정적, `/api/` → `127.0.0.1:4000` (접두어 제거), `/uploads/` 도 서버로
-    — 예시는 `server/deploy/nginx-todobuddy-pwa.conf`. 서버 `.env` 에 `TODOBUDDY_WEB_ORIGIN`·`TODOBUDDY_WEB_PATH`·`GOOGLE_WEB_CLIENT_*` 도 넣을 것
+- [x] 운영 배포 (v0.4.0)
+  - [x] 리버스 프록시: 게이트웨이(gsmsv Caddy)는 경로 설정을 못 해 VM 에 nginx 를 깔고 3000 을 맡겼다.
+    `/` → 소개 사이트(`127.0.0.1:3001` 로 옮김), `/app/` → `pwa/dist` 정적, `/api/` → `127.0.0.1:10000` (접두어 제거), `/uploads/` 도 서버로
+    — 설정은 `server/deploy/nginx-todobuddy-pwa.conf`. 서버 `.env` 에 `TODOBUDDY_WEB_ORIGIN`·`TODOBUDDY_WEB_PATH`·`GOOGLE_WEB_CLIENT_*` 넣음
   - [x] `server/deploy/todobuddy-deploy.sh` 에 `npm ci` + `npm run pwa:build` 추가.
     **운영 서버 사본은 root 소유라 직접 다시 깔아야 한다.**
     - `npm ci` 대신 기존 `install_deps`(npm install) 를 쓴다 — 같은 체크아웃의 node_modules 로 `web` 이 돌고 있어서 지우면 안 된다.
     - `pwa/dist.next` 에 빌드 → 서버 헬스체크 통과 뒤에만 `dist` 와 바꿔 끼운다. 빌드가 깨지면 서버를 재시작하기 전에 멈추고 되돌린다.
-    - [ ] 운영 서버에 새 스크립트 다시 깔기 (`sudo install -o root -m 755 server/deploy/todobuddy-deploy.sh /usr/local/bin/todobuddy-deploy`)
-  - [ ] 구글 콘솔: 웹 클라이언트의 승인된 리디렉션 URI·자바스크립트 원본 등록
+    - [x] 운영 서버에 새 스크립트 다시 깔기 (`sudo install -o root -m 755 server/deploy/todobuddy-deploy.sh /usr/local/bin/todobuddy-deploy`)
+  - [x] 구글 콘솔: 웹 클라이언트의 승인된 리디렉션 URI·자바스크립트 원본 등록
 - [x] Lighthouse PWA·접근성 점검
   - Lighthouse 12 기준(PWA 항목은 Lighthouse 에서 빠졌다. 설치 가능 여부는 e2e 가 매니페스트·서비스워커로 확인한다):
     로그인 화면 성능 0.95 · 접근성 0.95 · 권장사항 0.96, 메인 화면 접근성 0.96 · 권장사항 1.0.
