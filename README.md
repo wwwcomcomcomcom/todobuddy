@@ -110,7 +110,8 @@ npm --workspace pwa run e2e:visual   # 스크린샷 비교. 실패하면 갱신 
 - **소개 사이트·PWA·API 는 한 호스트**(`todobuddy.https.gsmsv.site`)에서 서빙합니다.
   `/` 는 소개 사이트, `/app/` 은 PWA, `/api` 는 API(프록시가 접두어를 떼어 서버로 넘김), `/uploads` 는 프로필 사진입니다.
   PWA 경로는 `pwa/vite.config.ts` 의 `BASE` 와 서버 `.env` 의 `TODOBUDDY_WEB_PATH` 가 같아야 합니다.
-  운영 예시는 [`server/deploy/nginx-todobuddy-pwa.conf`](server/deploy/nginx-todobuddy-pwa.conf).
+  운영에서는 gsmsv 게이트웨이가 이 호스트를 VM 의 3000 포트로 넘기고, VM 의 nginx 가 경로를 나눕니다 (소개 사이트는 `127.0.0.1:3001`).
+  설정은 [`server/deploy/nginx-todobuddy-pwa.conf`](server/deploy/nginx-todobuddy-pwa.conf).
 - 인증은 서버가 심는 httpOnly 쿠키(`tb_session`)입니다. 스크립트는 토큰을 볼 수 없습니다.
 - 서비스워커는 해시된 자산만 미리 받아 두고, 새 버전이 나오면 "새 버전이 있어요" 안내만 띄웁니다 (자동 새로고침 없음).
   오프라인에서는 마지막으로 받은 껍데기와 "오프라인이에요" 화면을 보여줍니다. 오프라인 편집은 하지 않습니다.
@@ -229,11 +230,12 @@ SQLite 파일은 `server/data/todobuddy.db`, 업로드한 프로필 사진은 `s
 
 `v` 로 시작하는 태그를 올리면 앱 릴리스와 함께 운영 서버와 웹 앱도 같은 버전으로 배포됩니다.
 GitHub 호스팅 러너에서 서버 테스트와 웹 앱 빌드가 통과하면, 운영 서버에 붙은 self-hosted 러너가
-DB 스냅샷 → 태그 체크아웃 → 웹 앱 빌드(`pwa/dist.next`) → 재시작 → 헬스체크 → 웹 앱 교체 순으로 배포하고,
+DB 스냅샷 → 태그 체크아웃 → 웹 앱·소개 사이트 빌드 → 재시작 → 헬스체크 → 웹 앱·소개 사이트 교체 순으로 배포하고,
 실패하면 이전 버전으로 되돌립니다 (웹 앱은 헬스체크를 통과할 때만 바뀝니다).
 서버만 다시 배포하려면 Actions 탭의 **서버 배포** 워크플로를 태그를 골라 수동 실행합니다.
 
-운영 서버에 깔린 배포 스크립트와 systemd 유닛, 리버스 프록시 예시의 원본은 `server/deploy/` 에 있습니다.
+운영 서버에 깔린 배포 스크립트와 systemd 유닛, nginx 설정의 원본은 `server/deploy/` 에 있습니다.
+소개 사이트(`web/`)는 systemd 서비스 `todobuddy-web` 으로 돌고, `web/` 이 바뀐 태그에서만 다시 빌드·재시작됩니다.
 
 PR 과 master 에는 `.github/workflows/pwa-ci.yml` 이 서버 테스트·웹 앱 단위 테스트·빌드·e2e 를 돌립니다 (GitHub 호스팅 러너).
 
