@@ -5,7 +5,7 @@ import { site } from '@/lib/site';
 const links = [
   { href: '/#features', label: '기능' },
   { href: '/#sharing', label: '공개 범위' },
-  { href: '/#download', label: '다운로드' },
+  { href: '/#install', label: '설치' },
 ];
 
 export function SiteHeader() {
@@ -29,12 +29,12 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <Link
-          href="/#download"
+        <a
+          href={site.appPath}
           className="ml-auto rounded-full bg-ink px-4 py-2.5 text-[14px] font-semibold text-white transition-opacity hover:opacity-85 sm:ml-0"
         >
-          내려받기
-        </Link>
+          시작하기
+        </a>
       </div>
     </header>
   );
