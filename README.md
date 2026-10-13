@@ -65,7 +65,7 @@ npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
 
 | 경로 | 내용 |
 | --- | --- |
-| `/` | 랜딩. 앱 소개와 플랫폼별 내려받기 |
+| `/` | 랜딩. 앱 소개, 웹 앱 시작하기, 홈 화면·앱 목록에 설치하는 방법 |
 | `/terms` | 이용약관 |
 | `/privacy` | 개인정보 처리방침 |
 
@@ -79,8 +79,8 @@ npm run web:build  # 정적 빌드 (모든 페이지가 프리렌더됩니다)
 | 문의 메일 | `NEXT_PUBLIC_CONTACT_EMAIL` | `iieiiergn@gmail.com` |
 | GitHub 저장소 | `NEXT_PUBLIC_GITHUB_REPO` | `wwwcomcomcomcom/todobuddy` |
 
-내려받기 버튼은 GitHub Releases 의 최신 릴리스로 보냅니다.
-`v` 로 시작하는 태그를 올리면 워크플로가 macOS·Windows ZIP 을 만들어 릴리스에 붙입니다.
+시작하기 버튼은 같은 호스트의 웹 앱(`/app/`)으로 보냅니다. Next 의 라우트가 아니므로 `<Link>` 가 아닌 `<a>` 로 겁니다.
+데스크탑 앱은 `v` 로 시작하는 태그마다 워크플로가 macOS·Windows ZIP 을 만들어 GitHub Releases 에 붙이지만, 랜딩에서는 더 이상 링크하지 않습니다.
 
 **배포 빌드가 바라볼 서버 주소는 저장소 변수로 정합니다.**
 GitHub 의 `Settings > Secrets and variables > Actions > Variables` 에 `TODOBUDDY_API` 를 넣으면

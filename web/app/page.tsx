@@ -1,5 +1,5 @@
 import { BoardPreview } from '@/components/BoardPreview';
-import { platforms, site } from '@/lib/site';
+import { installGuides, site } from '@/lib/site';
 
 const features = [
   {
@@ -59,25 +59,21 @@ export default function HomePage() {
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <a
-                href={site.latestReleaseUrl}
+                href={site.appPath}
                 className="rounded-full bg-ink px-6 py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-85"
-                target="_blank"
-                rel="noreferrer"
               >
-                내려받기
+                웹에서 시작하기
               </a>
               <a
-                href={site.repoUrl}
+                href="#install"
                 className="rounded-full px-6 py-3.5 text-[15px] font-semibold text-ink ring-1 ring-line transition-colors ring-inset hover:bg-chip"
-                target="_blank"
-                rel="noreferrer"
               >
-                GitHub에서 보기
+                앱으로 설치하기
               </a>
             </div>
 
             <p className="mt-5 text-[13px] leading-relaxed text-subtle">
-              무료 · 오픈소스 · 서버는 직접 띄워 씁니다
+              무료 · 오픈소스 · 내려받을 것 없이 브라우저에서 바로
             </p>
           </div>
 
@@ -152,65 +148,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 다운로드 */}
-      <section id="download" className="scroll-mt-20 border-t border-line">
+      {/* 설치 */}
+      <section id="install" className="scroll-mt-20 border-t border-line">
         <div className="mx-auto max-w-[1120px] px-5 py-16 sm:px-8 sm:py-20">
-          <h2 className="text-[28px] leading-snug font-extrabold tracking-[-0.02em] sm:text-[32px]">
-            내려받기
-          </h2>
-          <p className="mt-5 max-w-[42ch] text-[14.5px] leading-[1.8] text-subtle">
-            macOS 와 Windows 가 같은 코드로 돕니다. 두 쪽 모두 배포본이 있습니다.
-          </p>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-[28px] leading-snug font-extrabold tracking-[-0.02em] sm:text-[32px]">
+                설치 없이 열고, 원하면 앱처럼
+              </h2>
+              <p className="mt-5 max-w-[46ch] text-[14.5px] leading-[1.8] text-subtle">
+                주소 하나로 컴퓨터와 휴대폰 어디서든 같은 할 일이 열립니다. 홈 화면이나 앱 목록에
+                추가하면 주소창 없이 앱처럼 뜹니다.
+              </p>
+            </div>
+            <a
+              href={site.appPath}
+              className="shrink-0 self-start rounded-full bg-ink px-5 py-3 text-center text-[14px] font-semibold text-white transition-opacity hover:opacity-85 sm:self-auto"
+            >
+              웹 앱 열기
+            </a>
+          </div>
 
           <ul className="mt-10 divide-y divide-line border-y border-line">
-            {platforms.map((platform) => (
+            {installGuides.map((guide) => (
               <li
-                key={platform.name}
-                className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:gap-8"
+                key={guide.name + guide.browser}
+                className="flex flex-col gap-2 py-6 sm:flex-row sm:items-center sm:gap-8"
               >
-                <div className="sm:w-[120px] sm:shrink-0">
-                  <div className="text-[17px] font-bold">{platform.name}</div>
-                  <div className="mt-1 text-[12.5px] text-subtle">{platform.status}</div>
+                <div className="sm:w-[160px] sm:shrink-0">
+                  <div className="text-[17px] font-bold">{guide.name}</div>
+                  <div className="mt-1 text-[12.5px] text-subtle">{guide.browser}</div>
                 </div>
-
-                <p className="max-w-[52ch] flex-1 text-[14px] leading-[1.75] text-subtle">
-                  {platform.detail}
+                <p className="max-w-[60ch] flex-1 text-[14px] leading-[1.75] text-subtle">
+                  {guide.steps}
                 </p>
-
-                <a
-                  href={platform.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="shrink-0 rounded-full bg-ink px-5 py-3 text-center text-[14px] font-semibold text-white transition-opacity hover:opacity-85"
-                >
-                  {platform.cta}
-                </a>
               </li>
             ))}
           </ul>
 
           <div className="mt-10 grid gap-8 sm:grid-cols-2">
             <div>
-              <h3 className="text-[15px] font-bold">macOS에서 처음 열 때</h3>
+              <h3 className="text-[15px] font-bold">구글 계정으로 바로 시작합니다</h3>
               <p className="mt-2.5 max-w-[42ch] text-[14px] leading-[1.8] text-subtle">
-                아직 Apple Developer 인증서로 서명하지 않아, 처음 한 번은 macOS 가 실행을 막습니다.
-                경고를 닫고 <span className="text-ink">시스템 설정 → 개인정보 보호 및 보안</span> 으로
-                가면 아래쪽 보안 항목에 <span className="text-ink">그래도 열기</span> 가 생깁니다. 그
-                다음부터는 더블클릭으로 열립니다.
+                따로 가입할 필요 없이 구글 계정으로 로그인합니다. 어느 기기에서 열어도 같은 할 일과
+                친구·크루가 그대로 보입니다.
               </p>
-              <p className="mt-3 max-w-[42ch] text-[14px] leading-[1.8] text-subtle">
-                터미널이 편하면 아래 한 줄로도 됩니다. 받은 파일에 붙는 격리 표시를 지웁니다.
-              </p>
-              <code className="mt-2.5 block overflow-x-auto rounded-xl bg-chip px-3.5 py-3 font-mono text-[12.5px] whitespace-pre text-ink">
-                xattr -dr com.apple.quarantine &quot;/Applications/Todo Buddy.app&quot;
-              </code>
             </div>
 
             <div>
-              <h3 className="text-[15px] font-bold">서버가 함께 있어야 합니다</h3>
+              <h3 className="text-[15px] font-bold">업데이트는 알아서 됩니다</h3>
               <p className="mt-2.5 max-w-[42ch] text-[14px] leading-[1.8] text-subtle">
-                할 일과 친구 관계는 직접 띄운 서버에 저장됩니다. 저장소의 안내를 따라 서버를 먼저
-                실행한 뒤 앱을 열어 주세요.
+                새 버전이 나오면 앱 안에 새로고침 안내가 뜹니다. 다시 내려받거나 설치할 필요가
+                없습니다.
               </p>
             </div>
           </div>
