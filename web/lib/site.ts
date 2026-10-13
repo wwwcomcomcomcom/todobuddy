@@ -8,7 +8,7 @@ export const site = {
   description: '친구·크루와 하루치 할 일을 나눠 보는 TODO 앱',
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://todobuddy.https.gsmsv.site',
   contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? 'iieiiergn@gmail.com',
-  effectiveDate: '2026년 9월 15일',
+  effectiveDate: '2026년 10월 13일',
   repoUrl: `https://github.com/${repo}`,
   // 웹 앱(PWA)은 같은 호스트의 /app/ 에서 nginx 가 서빙한다. Next 의 라우트가 아니므로 <Link> 대신 <a> 로 건다.
   appPath: '/app/',
