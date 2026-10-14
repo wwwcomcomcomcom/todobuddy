@@ -25,8 +25,6 @@ class _TodoMateImportScreenState extends State<TodoMateImportScreen> {
   final _client = TodoMateClient();
 
   late final DateTime _today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-  late final DateTime _earliestBound = _today.subtract(const Duration(days: 30));
-  late final DateTime _latestBound = _today.add(const Duration(days: 365));
   late DateTime _rangeStart = _today.subtract(const Duration(days: 7));
   late DateTime _rangeEnd = _today.add(const Duration(days: 30));
 
@@ -100,8 +98,9 @@ class _TodoMateImportScreenState extends State<TodoMateImportScreen> {
     final picked = await showDatePicker(
       context: context,
       initialDate: isStart ? _rangeStart : _rangeEnd,
-      firstDate: _earliestBound,
-      lastDate: _latestBound,
+      // 기간 제한은 없다. showDatePicker 가 양끝을 요구하므로 넉넉하게 잡는다.
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100, 12, 31),
     );
     if (picked == null) return;
     setState(() {
@@ -180,8 +179,6 @@ class _TodoMateImportScreenState extends State<TodoMateImportScreen> {
         _Step.range => _RangeForm(
             start: _rangeStart,
             end: _rangeEnd,
-            earliestBound: _earliestBound,
-            latestBound: _latestBound,
             busy: _busy,
             error: _error,
             onPickStart: () => _pickDate(isStart: true),
@@ -272,8 +269,6 @@ class _RangeForm extends StatelessWidget {
   const _RangeForm({
     required this.start,
     required this.end,
-    required this.earliestBound,
-    required this.latestBound,
     required this.busy,
     required this.error,
     required this.onPickStart,
@@ -283,8 +278,6 @@ class _RangeForm extends StatelessWidget {
 
   final DateTime start;
   final DateTime end;
-  final DateTime earliestBound;
-  final DateTime latestBound;
   final bool busy;
   final String? error;
   final VoidCallback onPickStart;
@@ -296,11 +289,7 @@ class _RangeForm extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       children: [
-        Text(
-          '가져올 수 있는 기간: ${ymd(earliestBound)} ~ ${ymd(latestBound)}',
-          style: const TextStyle(color: AppColors.subtle, fontSize: 13),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 8),
         _DateRow(label: '시작일', date: start, onTap: busy ? null : onPickStart),
         const SizedBox(height: 12),
         _DateRow(label: '종료일', date: end, onTap: busy ? null : onPickEnd),

@@ -29,12 +29,8 @@ export default function TodoMateImportScreen() {
   const navigate = useNavigate();
   const client = useMemo(() => new TodoMateClient({ getConfig: (refresh) => store.api.todomateConfig(refresh) }), [store]);
 
-  const [bounds] = useState(() => {
-    const today = todayYmd();
-    return { today, earliest: addDays(today, -30), latest: addDays(today, 365) };
-  });
-  const [rangeStart, setRangeStart] = useState(() => addDays(bounds.today, -7));
-  const [rangeEnd, setRangeEnd] = useState(() => addDays(bounds.today, 30));
+  const [rangeStart, setRangeStart] = useState(() => addDays(todayYmd(), -7));
+  const [rangeEnd, setRangeEnd] = useState(() => addDays(todayYmd(), 30));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -104,13 +100,12 @@ export default function TodoMateImportScreen() {
 
   const pickDate = (isStart: boolean, value: string) => {
     if (!value) return; // 지우기 버튼 등으로 빈 값이 오면 무시한다.
-    const picked = value < bounds.earliest ? bounds.earliest : value > bounds.latest ? bounds.latest : value;
     if (isStart) {
-      setRangeStart(picked);
-      if (rangeEnd < picked) setRangeEnd(picked);
+      setRangeStart(value);
+      if (rangeEnd < value) setRangeEnd(value);
     } else {
-      setRangeEnd(picked);
-      if (rangeStart > picked) setRangeStart(picked);
+      setRangeEnd(value);
+      if (rangeStart > value) setRangeStart(value);
     }
   };
 
@@ -169,12 +164,9 @@ export default function TodoMateImportScreen() {
       )}
       {step === 'range' && (
         <main className="safe-px safe-pb mx-auto w-full max-w-2xl pt-4 pb-8">
-          <p className="text-[13px] text-subtle">
-            가져올 수 있는 기간: {bounds.earliest} ~ {bounds.latest}
-          </p>
-          <div className="mt-6 flex flex-col gap-3">
-            <DateRow label="시작일" value={rangeStart} min={bounds.earliest} max={bounds.latest} disabled={busy} onChange={(v) => pickDate(true, v)} />
-            <DateRow label="종료일" value={rangeEnd} min={bounds.earliest} max={bounds.latest} disabled={busy} onChange={(v) => pickDate(false, v)} />
+          <div className="mt-2 flex flex-col gap-3">
+            <DateRow label="시작일" value={rangeStart} disabled={busy} onChange={(v) => pickDate(true, v)} />
+            <DateRow label="종료일" value={rangeEnd} disabled={busy} onChange={(v) => pickDate(false, v)} />
           </div>
           <Button size="lg" block className="mt-6" disabled={busy} onClick={() => void loadPreview()}>
             일정 불러오기
@@ -286,8 +278,8 @@ function LoginForm({
 
 /** 회색 바탕의 날짜 한 줄. 누르면 브라우저 기본 날짜 선택기가 뜬다. */
 function DateRow({
-  label, value, min, max, disabled, onChange,
-}: { label: string; value: string; min: string; max: string; disabled: boolean; onChange: (v: string) => void }) {
+  label, value, disabled, onChange,
+}: { label: string; value: string; disabled: boolean; onChange: (v: string) => void }) {
   return (
     <label className={`flex items-center gap-2 rounded-xl bg-chip px-[18px] py-3 ${disabled ? 'opacity-60' : 'cursor-pointer'}`}>
       <span className="text-[15px] font-bold">{label}</span>
@@ -296,8 +288,6 @@ function DateRow({
         aria-label={label}
         className="ml-auto min-w-0 bg-transparent py-1 text-right font-semibold outline-none"
         value={value}
-        min={min}
-        max={max}
         required
         disabled={disabled}
         onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
